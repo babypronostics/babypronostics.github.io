@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🍼 Pronostics Bébé</title>
+  <title>🍼 Baby Pronostics</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/build/iife.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * {
@@ -17,34 +18,116 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: linear-gradient(135deg, #fef9f3 0%, #faf6f1 100%);
       min-height: 100vh;
-      padding: 40px 20px;
       color: #333;
     }
 
     .container {
       max-width: 700px;
       margin: 0 auto;
+      padding: 40px 20px;
     }
 
     header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 40px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      padding: 10px;
     }
 
     h1 {
       font-family: 'Crimson Text', serif;
-      font-size: 48px;
+      font-size: 42px;
       font-weight: 600;
       color: #2c2c2c;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
+      margin: 0;
     }
 
     .subtitle {
       font-size: 16px;
       color: #999;
       font-weight: 300;
-      letter-spacing: 0.5px;
+    }
+
+    /* MENU LATÉRAL */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      background: white;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar.active {
+      transform: translateX(0);
+    }
+
+    .sidebar-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .sidebar-content {
+      margin-top: 40px;
+    }
+
+    .sidebar-item {
+      display: block;
+      padding: 16px 12px;
+      color: #666;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-item:hover {
+      background: #f5f5f5;
+      color: #2c2c2c;
+    }
+
+    .sidebar-item.active {
+      background: #2c2c2c;
+      color: white;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: none;
+      z-index: 999;
+    }
+
+    .sidebar.active ~ .sidebar-overlay {
+      display: block;
     }
 
     .page {
@@ -52,14 +135,6 @@
     }
 
     .page.active {
-      display: block;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
       display: block;
     }
 
@@ -79,17 +154,7 @@
       color: #2c2c2c;
     }
 
-    .label-with-emoji {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .emoji {
-      font-size: 20px;
-    }
-
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 14px 16px;
       border: 1px solid #e8e8e8;
@@ -101,15 +166,11 @@
       transition: all 0.2s ease;
     }
 
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: #d4a574;
       background: white;
       box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
-    }
-
-    input::placeholder {
-      color: #bbb;
     }
 
     button {
@@ -122,7 +183,6 @@
       border-radius: 8px;
       font-size: 16px;
       font-weight: 500;
-      font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -134,11 +194,18 @@
     .button-secondary {
       background: #f0f0f0;
       color: #2c2c2c;
-      margin-top: 10px;
     }
 
     .button-secondary:hover {
       background: #e0e0e0;
+    }
+
+    .button-danger {
+      background: #e8896a;
+    }
+
+    .button-danger:hover {
+      background: #d4745a;
     }
 
     .message {
@@ -159,32 +226,120 @@
       color: #a13030;
     }
 
-    .tab-buttons {
-      display: flex;
-      gap: 10px;
+    .intro-text {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
       margin-bottom: 30px;
-      border-bottom: 1px solid #e8e8e8;
-      padding-bottom: 20px;
-      flex-wrap: wrap;
+      line-height: 1.8;
+      border-left: 4px solid #d4a574;
     }
 
-    .tab-btn {
-      flex: 1;
-      min-width: 100px;
+    .couple-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .couple-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .couple-info h2 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .couple-info p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .link-section {
+      background: #fff9f0;
+      border: 2px solid #d4a574;
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .link-input {
+      background: white;
+      border: 1px solid #d4a574;
       padding: 12px;
-      background: transparent;
-      border: none;
-      border-bottom: 3px solid transparent;
-      color: #999;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    .copy-btn {
+      background: #d4a574;
+      color: white;
+      width: auto;
+      padding: 10px 20px;
       font-size: 14px;
     }
 
-    .tab-btn.active {
-      border-bottom-color: #2c2c2c;
-      color: #2c2c2c;
+    .copy-btn:hover {
+      background: #c4955f;
+    }
+
+    .pronostic-card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      gap: 15px;
+    }
+
+    .pronostic-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .pronostic-content {
+      flex: 1;
+    }
+
+    .pronostic-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .pronostic-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .delete-btn-small {
+      background: #e8896a;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .delete-btn-small:hover {
+      background: #d4745a;
     }
 
     table {
@@ -204,12 +359,6 @@
       font-size: 12px;
       color: #666;
       border-bottom: 1px solid #e8e8e8;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    th:hover {
-      background: #efefef;
     }
 
     td {
@@ -218,8 +367,19 @@
       font-size: 13px;
     }
 
-    tr:last-child td {
-      border-bottom: none;
+    .points-badge {
+      background: #2c2c2c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .rank {
+      font-weight: 600;
+      color: #d4a574;
+      font-size: 16px;
     }
 
     .user-info {
@@ -233,36 +393,16 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
-    .user-email {
-      font-weight: 500;
-      font-size: 14px;
-    }
-
     .logout-btn {
       background: #e8896a;
-      font-size: 14px;
-      padding: 10px 20px;
       width: auto;
+      padding: 10px 20px;
+      font-size: 14px;
       margin-top: 0;
     }
 
     .logout-btn:hover {
       background: #d4745a;
-    }
-
-    .points-badge {
-      background: #2c2c2c;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .rank {
-      font-weight: 600;
-      color: #d4a574;
-      font-size: 16px;
     }
 
     .admin-section {
@@ -276,25 +416,55 @@
     .admin-section h3 {
       margin-bottom: 20px;
       color: #2c2c2c;
-      font-size: 18px;
     }
 
-    .filter-section {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    .avatar-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .filter-section label {
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .filter-section input {
+    .avatar-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 10px;
-      font-size: 14px;
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-option:hover {
+      border-color: #d4a574;
+      background: #fff9f0;
+    }
+
+    .avatar-option.selected {
+      border-color: #2c2c2c;
+      background: #f5f5f5;
+    }
+
+    .avatar-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+    }
+
+    .avatar-name {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+
+    .photo-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-top: 10px;
     }
 
     @keyframes slideUp {
@@ -312,46 +482,46 @@
       animation: slideUp 0.4s ease-out;
     }
 
-    .scoring-info {
-      background: #f5f5f5;
-      padding: 16px;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-size: 12px;
-      color: #666;
-      line-height: 1.6;
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
     }
 
-    .admin-code-section {
-      background: #fffbf7;
-      border: 2px dashed #d4a574;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      text-align: center;
+    .checkbox-item input {
+      width: auto;
+      margin-right: 10px;
     }
 
-    .admin-code-section label {
-      margin-bottom: 15px;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .admin-code-section input {
-      max-width: 300px;
-      margin: 0 auto 15px;
+    .checkbox-item label {
+      margin: 0;
+      font-weight: 400;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
+  <!-- SIDEBAR MENU -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+    <div class="sidebar-content" id="sidebarContent"></div>
+  </div>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
   <!-- PAGE: LOGIN/SIGNUP -->
   <div id="loginPage" class="page active">
     <div class="container">
       <header>
-        <h1>Pronostics Bébé 🍼</h1>
-        <p class="subtitle">Rejoins l'aventure</p>
+        <div class="header-left">
+          <h1>Baby 🍼</h1>
+        </div>
       </header>
+
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h2 style="font-size: 28px; margin-bottom: 10px;">Pronostics</h2>
+        <p class="subtitle">Créez votre salon de pronostics</p>
+      </div>
 
       <div class="form-group">
         <label>Email</label>
@@ -373,9 +543,14 @@
   <div id="signupPage" class="page">
     <div class="container">
       <header>
-        <h1>Pronostics Bébé 🍼</h1>
-        <p class="subtitle">Créer un compte</p>
+        <div class="header-left">
+          <h1>Baby 🍼</h1>
+        </div>
       </header>
+
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h2 style="font-size: 28px; margin-bottom: 10px;">Créer un compte</h2>
+      </div>
 
       <div class="form-group">
         <label>Email</label>
@@ -393,277 +568,417 @@
       </div>
 
       <button onclick="handleSignup()">S'inscrire ✨</button>
-      <button class="button-secondary" onclick="toggleSignup()">← Retour au login</button>
+      <button class="button-secondary" onclick="toggleSignup()">← Retour</button>
       <div id="signupMessage" class="message" style="display:none;"></div>
     </div>
   </div>
 
-  <!-- PAGE: MAIN APP (après login) -->
-  <div id="mainPage" class="page">
+  <!-- PAGE: SETUP SALON -->
+  <div id="setupPage" class="page">
     <div class="container">
+      <header>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>Baby 🍼</h1>
+      </header>
+
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h2 style="font-size: 28px; margin-bottom: 10px;">Créez votre salon</h2>
+        <p class="subtitle">Quelques infos pour commencer</p>
+      </div>
+
+      <div class="form-group">
+        <label>Prénom du papa</label>
+        <input type="text" id="setupPapaPm" placeholder="Jean" required>
+      </div>
+
+      <div class="form-group">
+        <label>Prénom de la maman</label>
+        <input type="text" id="setupMamanPm" placeholder="Marie" required>
+      </div>
+
+      <div class="form-group">
+        <label>Photo de profil (optionnel)</label>
+        <input type="file" id="setupPhotoFile" accept="image/*">
+        <img id="setupPhotoPreview" class="photo-preview" style="display: none;">
+      </div>
+
+      <div class="form-group">
+        <label>Description (optionnel)</label>
+        <textarea id="setupDescription" placeholder="Ex: Nous attendons notre premier enfant..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Date du terme</label>
+        <input type="date" id="setupDateTerme" required>
+      </div>
+
+      <div class="form-group">
+        <label>Enfants déjà</label>
+        <input type="number" id="setupNbEnfants" value="0" min="0" required>
+      </div>
+
+      <div class="form-group">
+        <label style="font-weight: 600; margin-bottom: 15px; display: block;">Items à collecter :</label>
+        <div class="checkbox-item"><input type="checkbox" id="item-sexe" checked><label>👶 Sexe</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-prenom" checked><label>📝 Prénom</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-date" checked><label>📅 Date</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-heure" checked><label>🕐 Heure</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-taille" checked><label>📏 Taille</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-poids" checked><label>⚖️ Poids</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-cheveux" checked><label>💁 Cheveux</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-yeux"><label>👁️ Yeux</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="item-ressemblance"><label>👨👩 Ressemblance</label></div>
+      </div>
+
+      <button onclick="createSalon()">Créer le salon 🚀</button>
+      <div id="setupMessage" class="message" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: DASHBOARD ACCUEIL -->
+  <div id="dashboardAccueil" class="page">
+    <div class="container">
+      <header>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>Baby 🍼</h1>
+      </header>
+
       <div class="user-info">
-        <span class="user-email">Connecté: <strong id="userEmail"></strong></span>
+        <span>Connecté: <strong id="dashboardEmail"></strong></span>
         <button class="logout-btn" onclick="handleLogout()">Déconnexion</button>
       </div>
 
-      <div class="tab-buttons">
-        <button class="tab-btn active" onclick="switchTab('formulaire')">📝 Pronostic</button>
-        <button class="tab-btn" onclick="switchTab('resultats')">📊 Résultats</button>
-        <button class="tab-btn" id="adminTab" onclick="switchTab('admin')">👑 Admin</button>
+      <div class="couple-header">
+        <img id="dashboardPhoto" class="couple-photo" src="">
+        <div class="couple-info">
+          <h2 id="dashboardTitle"></h2>
+          <p id="dashboardDate"></p>
+        </div>
       </div>
 
-      <!-- TAB: FORMULAIRE -->
-      <div id="formulaire" class="tab-content active">
-        <header>
-          <h1>Ton pronostic 🎯</h1>
-          <p class="subtitle">Fais tes prédictions</p>
-        </header>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">👤</span> <span>Ton Nom Prénom</span></label>
-          <input type="text" id="prenom_participant" placeholder="Jean Dupont" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">👶</span> <span>Sexe du bébé</span></label>
-          <select id="sexe_bebe" required>
-            <option value="">Choisir une option</option>
-            <option value="Garçon">👦 Garçon</option>
-            <option value="Fille">👧 Fille</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">📝</span> <span>Prénom du bébé</span></label>
-          <input type="text" id="prenom_bebe" placeholder="Emma" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">📅</span> <span>Date de naissance</span></label>
-          <input type="date" id="date_naissance" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">🕐</span> <span>Heure de naissance</span></label>
-          <input type="time" id="heure_naissance" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">📏</span> <span>Taille (cm)</span></label>
-          <input type="number" id="taille_cm" placeholder="51" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">⚖️</span> <span>Poids (grammes)</span></label>
-          <input type="number" id="poids_grammes" placeholder="3400" required>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">💁</span> <span>Couleur de cheveux</span></label>
-          <select id="couleur_cheveux" required>
-            <option value="">Choisir une option</option>
-            <option value="Brun">🟤 Brun</option>
-            <option value="Blond">🟡 Blond</option>
-            <option value="Roux">🔴 Roux</option>
-            <option value="Chauve">⚪ Chauve</option>
-            <option value="Autres">❓ Autres</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">👁️</span> <span>Couleur des yeux</span></label>
-          <select id="couleur_yeux" required>
-            <option value="">Choisir une option</option>
-            <option value="Bleu">🔵 Bleu</option>
-            <option value="Marron">🟤 Marron</option>
-            <option value="Vert">💚 Vert</option>
-            <option value="Noisette">🟠 Noisette</option>
-            <option value="Autres">❓ Autres</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="label-with-emoji"><span class="emoji">👨👩</span> <span>Ressemblance</span></label>
-          <select id="ressemblance" required>
-            <option value="">Choisir une option</option>
-            <option value="Papa">👨 Papa</option>
-            <option value="Maman">👩 Maman</option>
-            <option value="Neutre">☯️ Moitié-moitié</option>
-          </select>
-        </div>
-
-        <button onclick="envoyerPronostic()">Envoyer mon pronostic ✨</button>
-        <div id="formulaireMessage" class="message" style="display:none;"></div>
+      <div class="link-section">
+        <h3>Lien à partager</h3>
+        <div class="link-input" id="salonLink"></div>
+        <button class="copy-btn" onclick="copySalonLink()">Copier 📋</button>
       </div>
 
-      <!-- TAB: RESULTATS -->
-      <div id="resultats" class="tab-content">
-        <header>
-          <h1>Tous les pronostics 📊</h1>
-          <p class="subtitle">Découvre les prédictions</p>
-        </header>
+      <div class="intro-text" id="introPreview"></div>
+    </div>
+  </div>
 
-        <div class="filter-section">
-          <label>🔍 Rechercher par Nom/Prénom :</label>
-          <input type="text" id="filterName" placeholder="Tapez un nom..." onkeyup="filterTable()">
+  <!-- PAGE: DASHBOARD PRONOSTICS -->
+  <div id="dashboardPronostics" class="page">
+    <div class="container">
+      <header>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>Baby 🍼</h1>
+      </header>
+
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 24px; margin-bottom: 5px;">Pronostics reçus 📊</h2>
+      </div>
+
+      <div id="dashboardPronosticsContent"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: DASHBOARD RESULTATS -->
+  <div id="dashboardResultats" class="page">
+    <div class="container">
+      <header>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>Baby 🍼</h1>
+      </header>
+
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 24px; margin-bottom: 5px;">Résultats 🏆</h2>
+      </div>
+
+      <div class="admin-section">
+        <h3>Saisir les vraies infos du bébé</h3>
+        
+        <div class="form-group">
+          <label>Code admin</label>
+          <input type="password" id="adminCodeInput" placeholder="Tapez le code">
+          <button onclick="verifyAdminCode()" style="margin-top: 10px;">Valider</button>
+        </div>
+      </div>
+
+      <div id="adminContent" style="display: none;">
+        <div class="admin-section">
+          <h3>📋 Infos du bébé</h3>
+          
+          <div class="form-group">
+            <label>Sexe</label>
+            <select id="adminSexe">
+              <option value="">Choisir</option>
+              <option value="Garçon">Garçon</option>
+              <option value="Fille">Fille</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" id="adminPrenom" placeholder="Léa">
+          </div>
+
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="adminDate">
+          </div>
+
+          <div class="form-group">
+            <label>Heure</label>
+            <input type="time" id="adminHeure">
+          </div>
+
+          <div class="form-group">
+            <label>Taille (cm)</label>
+            <input type="number" id="adminTaille">
+          </div>
+
+          <div class="form-group">
+            <label>Poids (g)</label>
+            <input type="number" id="adminPoids">
+          </div>
+
+          <div class="form-group">
+            <label>Cheveux</label>
+            <select id="adminCheveux">
+              <option value="">Choisir</option>
+              <option value="Brun">Brun</option>
+              <option value="Blond">Blond</option>
+              <option value="Roux">Roux</option>
+              <option value="Chauve">Chauve</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Yeux</label>
+            <select id="adminYeux">
+              <option value="">Choisir</option>
+              <option value="Bleu">Bleu</option>
+              <option value="Marron">Marron</option>
+              <option value="Vert">Vert</option>
+              <option value="Noisette">Noisette</option>
+            </select>
+          </div>
+
+          <button onclick="calculerPoints()">📊 Calculer points</button>
+          <div id="adminMessage" class="message" style="display:none;"></div>
         </div>
 
+        <h3 style="margin-top: 30px; font-size: 24px;">Classement 🏆</h3>
         <div style="overflow-x: auto;">
-          <table id="resultatsTable">
+          <table id="classementTable">
             <thead>
               <tr>
-                <th onclick="sortTable(0)">👤 Nom Prénom</th>
-                <th onclick="sortTable(1)">👶 Sexe</th>
-                <th onclick="sortTable(2)">📝 Prénom BB</th>
-                <th onclick="sortTable(3)">📅 Date</th>
-                <th onclick="sortTable(4)">🕐 Heure</th>
-                <th onclick="sortTable(5)">📏 Taille</th>
-                <th onclick="sortTable(6)">⚖️ Poids</th>
-                <th onclick="sortTable(7)">💁 Cheveux</th>
-                <th onclick="sortTable(8)">👁️ Yeux</th>
-                <th onclick="sortTable(9)">👨👩 Ressem.</th>
+                <th>Rang</th>
+                <th>Nom</th>
+                <th>Points</th>
+                <th>Action</th>
               </tr>
             </thead>
-            <tbody id="resultatsBody">
-              <tr><td colspan="10" style="text-align:center; padding: 30px;">Chargement...</td></tr>
+            <tbody id="classementBody">
+              <tr><td colspan="4" style="text-align:center;">Aucun calcul encore</td></tr>
             </tbody>
           </table>
         </div>
+
+        <div style="background: #fff9f0; padding: 20px; border-radius: 8px; margin-top: 30px;">
+          <h3 style="margin-bottom: 15px;">📧 Envoyer les résultats</h3>
+          <div class="form-group">
+            <label>Email du vainqueur</label>
+            <input type="email" id="winnerEmail" placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label>Message personnalisé (optionnel)</label>
+            <textarea id="lotMessage" placeholder="Ex: Un lot attend le gagnant!"></textarea>
+          </div>
+          <button onclick="sendResults()" style="background: #2c8c42;">📧 Envoyer l'email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: SALON PUBLIC -->
+  <div id="salonPublicPage" class="page">
+    <div class="container">
+      <header>
+        <h1>Baby 🍼</h1>
+      </header>
+
+      <div class="couple-header">
+        <img id="publicPhoto" class="couple-photo" src="">
+        <div class="couple-info">
+          <h2 id="publicTitle"></h2>
+          <p id="publicSubtitle"></p>
+        </div>
       </div>
 
-      <!-- TAB: ADMIN -->
-      <div id="admin" class="tab-content">
-        <header>
-          <h1>Tableau admin 👑</h1>
-          <p class="subtitle">Gère les résultats et les points</p>
-        </header>
+      <div class="intro-text" id="publicIntro"></div>
 
-        <div class="admin-code-section">
-          <label>🔐 Code d'accès admin</label>
-          <input type="password" id="adminCode" placeholder="Tapez le code admin" onkeypress="if(event.key==='Enter') verifyAdminCode()">
-          <button onclick="verifyAdminCode()" style="margin-top: 10px;">Valider</button>
-          <div id="adminCodeMessage" class="message" style="display:none; margin-top: 15px;"></div>
+      <button onclick="showPronosticsForm()">Faire un pronostic 🎯</button>
+
+      <div id="pronosticsFormSection" style="display: none; margin-top: 40px;">
+        <h3 style="margin-bottom: 20px;">Saisissez vos prédictions</h3>
+
+        <div class="form-group">
+          <label>Ton Nom Prénom</label>
+          <input type="text" id="publicNomPrenom" placeholder="Jean Dupont" required>
         </div>
 
-        <div id="adminContent" style="display: none;">
-          <div class="admin-section">
-            <h3>📋 Vrai résultat du bébé</h3>
-            
-            <div class="form-group">
-              <label>Sexe réal</label>
-              <select id="adminSexe" required>
-                <option value="">Choisir</option>
-                <option value="Garçon">Garçon</option>
-                <option value="Fille">Fille</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Prénom réel</label>
-              <input type="text" id="adminPrenom" placeholder="Léa" required>
-            </div>
-
-            <div class="form-group">
-              <label>Date réelle</label>
-              <input type="date" id="adminDate" required>
-            </div>
-
-            <div class="form-group">
-              <label>Heure réelle</label>
-              <input type="time" id="adminHeure" required>
-            </div>
-
-            <div class="form-group">
-              <label>Taille réelle (cm)</label>
-              <input type="number" id="adminTaille" required>
-            </div>
-
-            <div class="form-group">
-              <label>Poids réel (grammes)</label>
-              <input type="number" id="adminPoids" required>
-            </div>
-
-            <div class="form-group">
-              <label>Couleur cheveux réelle</label>
-              <select id="adminCheveux" required>
-                <option value="">Choisir</option>
-                <option value="Brun">Brun</option>
-                <option value="Blond">Blond</option>
-                <option value="Roux">Roux</option>
-                <option value="Chauve">Chauve</option>
-                <option value="Autres">Autres</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Couleur yeux réelle</label>
-              <select id="adminYeux" required>
-                <option value="">Choisir</option>
-                <option value="Bleu">Bleu</option>
-                <option value="Marron">Marron</option>
-                <option value="Vert">Vert</option>
-                <option value="Noisette">Noisette</option>
-                <option value="Autres">Autres</option>
-              </select>
-            </div>
-
-            <button onclick="calculerPoints()">📊 Calculer les points</button>
-            <div id="adminMessage" class="message" style="display:none;"></div>
-          </div>
-
-          <h3>🏆 Classement des points</h3>
-          <div style="overflow-x: auto;">
-            <table id="classementTable">
-              <thead>
-                <tr>
-                  <th>Rang</th>
-                  <th>👤 Nom Prénom</th>
-                  <th>Points</th>
-                  <th>Détails</th>
-                </tr>
-              </thead>
-              <tbody id="classementBody">
-                <tr><td colspan="4" style="text-align:center; padding: 30px;">Aucun calcul de points encore</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="scoring-info">
-            <strong>📊 Système de points :</strong><br>
-            Sexe (3/5) : 6 pts | Prénom (5/5) : 10 pts | Date (5/5) : 10 pts (-1/jour)<br>
-            Heure (3/5) : 6 pts (-1/h) | Taille (5/5) : 10 pts (-1/cm) | Poids (5/5) : 10 pts (-1/20g)<br>
-            Cheveux (2/5) : 4 pts | Yeux (3/5) : 6 pts | Ressemblance : non valorisée<br>
-            <strong>Total max : 62 points</strong>
-          </div>
+        <div class="form-group">
+          <label>Ta photo (optionnel)</label>
+          <input type="file" id="publicPhotoFile" accept="image/*">
+          <img id="publicPhotoPreview" class="photo-preview" style="display: none;">
         </div>
+
+        <div class="form-group">
+          <label>Ou choisis un avatar :</label>
+          <div class="avatar-options" id="avatarOptions"></div>
+        </div>
+
+        <div id="publicFormItems"></div>
+
+        <button onclick="submitPublicPronostic()">Envoyer ✨</button>
+        <div id="publicMessage" class="message" style="display:none;"></div>
+      </div>
+
+      <div id="pronosticsListSection" style="margin-top: 40px;">
+        <h2 style="font-size: 24px; margin-bottom: 20px;">Tous les pronostics 📊</h2>
+        <div id="publicPronosticsBody"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // Configuration Supabase
+    emailjs.init('JowEoSeroRdMQL5Wo')
+
     const { createClient } = supabase
     const client = createClient(
       'https://jbshlixzuulwmuylqgef.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impic2hsaXh6dXVsd211eWxxZ2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTY3MTYsImV4cCI6MjA5NjA3MjcxNn0.BOQ4YQTfGT7NW2B5hYQsCf0G_Quu1zEVDYcn2rlFSrI'
     )
 
-    const ADMIN_CODE = '8974'
     let currentUser = null
+    let currentSalon = null
+    let currentCouple = null
+    let selectedAvatar = null
+    let uploadedPhotoFile = null
+    let uploadedPhotoPublic = null
     let isAdminVerified = false
-    let allData = []
+    let allPronostics = []
 
-    // Au chargement
+    const ADMIN_CODE = '8974'
+    const AVATAR_STYLES = [
+      { name: 'Leaf', style: 'leaf' },
+      { name: 'Flower', style: 'flower' },
+      { name: 'Critter', style: 'critter' },
+      { name: 'Shapes', style: 'shapes' },
+      { name: 'Rings', style: 'rings' },
+      { name: 'Lorelei', style: 'lorelei' }
+    ]
+
     window.onload = async () => {
-      const { data: { user } } = await client.auth.getUser()
-      if (user) {
-        currentUser = user
-        showMainPage()
-        loadResultats()
+      const params = new URLSearchParams(window.location.search)
+      const salonSlug = params.get('salon')
+
+      if (salonSlug) {
+        await loadPublicSalon(salonSlug)
+      } else {
+        const { data: { user } } = await client.auth.getUser()
+        if (user) {
+          currentUser = user
+          await loadUserSalon()
+        }
       }
     }
 
-    // Gestion de l'inscription
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active')
+    }
+
+    function generateSidebar() {
+      const content = document.getElementById('sidebarContent')
+      content.innerHTML = `
+        <a href="#" class="sidebar-item active" onclick="switchPage('dashboardAccueil'); toggleSidebar();">🏠 Accueil</a>
+        <a href="#" class="sidebar-item" onclick="switchPage('dashboardPronostics'); toggleSidebar();">📊 Pronostics</a>
+        <a href="#" class="sidebar-item" onclick="switchPage('dashboardResultats'); toggleSidebar();">🏆 Résultats</a>
+      `
+    }
+
+    document.addEventListener('change', (e) => {
+      if (e.target.id === 'setupPhotoFile') {
+        const file = e.target.files[0]
+        if (file) {
+          uploadedPhotoFile = file
+          const reader = new FileReader()
+          reader.onload = (event) => {
+            const preview = document.getElementById('setupPhotoPreview')
+            preview.src = event.target.result
+            preview.style.display = 'block'
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+      if (e.target.id === 'publicPhotoFile') {
+        const file = e.target.files[0]
+        if (file) {
+          uploadedPhotoPublic = file
+          selectedAvatar = null
+          const preview = document.getElementById('publicPhotoPreview')
+          const reader = new FileReader()
+          reader.onload = (event) => {
+            preview.src = event.target.result
+            preview.style.display = 'block'
+          }
+          reader.readAsDataURL(file)
+          document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+        }
+      }
+    })
+
+    async function loadPublicSalon(slug) {
+      const { data: salon, error } = await client
+        .from('salons')
+        .select('*, couples(*)')
+        .eq('slug', slug)
+        .single()
+
+      if (error || !salon) {
+        showPage('loginPage')
+        return
+      }
+
+      currentSalon = salon
+      currentCouple = salon.couples
+      generatePublicPage()
+      showPage('salonPublicPage')
+      generateAvatarOptions()
+      generatePublicForm()
+      loadPublicPronostics()
+    }
+
+    async function loadUserSalon() {
+      const { data: couple } = await client
+        .from('couples')
+        .select('*, salons(*)')
+        .eq('user_id', currentUser.id)
+        .single()
+
+      if (!couple || !couple.salons || couple.salons.length === 0) {
+        showPage('setupPage')
+      } else {
+        currentCouple = couple
+        currentSalon = couple.salons[0]
+        generateDashboard()
+        generateSidebar()
+        showPage('dashboardAccueil')
+        loadDashboardPronostics()
+      }
+    }
+
     function toggleSignup() {
       document.getElementById('loginPage').classList.toggle('active')
       document.getElementById('signupPage').classList.toggle('active')
@@ -680,11 +995,10 @@
       }
 
       const { error } = await client.auth.signUp({ email, password })
-
       if (error) {
         showMessage('signupMessage', '❌ ' + error.message, 'error')
       } else {
-        showMessage('signupMessage', '✅ Inscrit ! Tu peux maintenant te connecter', 'success')
+        showMessage('signupMessage', '✅ Compte créé ! Veuillez vous connecter.', 'success')
         setTimeout(() => toggleSignup(), 1500)
       }
     }
@@ -694,151 +1008,398 @@
       const password = document.getElementById('loginPassword').value
 
       const { data, error } = await client.auth.signInWithPassword({ email, password })
-
       if (error) {
         showMessage('loginMessage', '❌ Email ou mot de passe incorrect', 'error')
       } else {
         currentUser = data.user
-        showMainPage()
+        await loadUserSalon()
       }
-    }
-
-    function showMainPage() {
-      document.getElementById('loginPage').classList.remove('active')
-      document.getElementById('signupPage').classList.remove('active')
-      document.getElementById('mainPage').classList.add('active')
-      document.getElementById('userEmail').textContent = currentUser.email
     }
 
     async function handleLogout() {
       await client.auth.signOut()
       currentUser = null
+      currentCouple = null
+      currentSalon = null
       isAdminVerified = false
-      document.getElementById('mainPage').classList.remove('active')
-      document.getElementById('loginPage').classList.add('active')
-      document.getElementById('signupPage').classList.remove('active')
-      document.getElementById('loginEmail').value = ''
-      document.getElementById('loginPassword').value = ''
+      showPage('loginPage')
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
-      document.getElementById(tabName).classList.add('active')
-      event.target.classList.add('active')
+    async function createSalon() {
+      const prenom_papa = document.getElementById('setupPapaPm').value
+      const prenom_maman = document.getElementById('setupMamanPm').value
+      const description = document.getElementById('setupDescription').value
+      const date_terme = document.getElementById('setupDateTerme').value
+      const nb_enfants = parseInt(document.getElementById('setupNbEnfants').value)
 
-      if (tabName === 'resultats') {
-        loadResultats()
+      const items = []
+      if (document.getElementById('item-sexe').checked) items.push('sexe')
+      if (document.getElementById('item-prenom').checked) items.push('prenom')
+      if (document.getElementById('item-date').checked) items.push('date')
+      if (document.getElementById('item-heure').checked) items.push('heure')
+      if (document.getElementById('item-taille').checked) items.push('taille')
+      if (document.getElementById('item-poids').checked) items.push('poids')
+      if (document.getElementById('item-cheveux').checked) items.push('cheveux')
+      if (document.getElementById('item-yeux').checked) items.push('yeux')
+      if (document.getElementById('item-ressemblance').checked) items.push('ressemblance')
+
+      let photoUrl = null
+      if (uploadedPhotoFile) {
+        const fileName = Date.now() + '_' + uploadedPhotoFile.name
+        const { data, error: uploadError } = await client.storage
+          .from('couple-photos')
+          .upload(fileName, uploadedPhotoFile)
+
+        if (uploadError) {
+          showMessage('setupMessage', '❌ Erreur upload: ' + uploadError.message, 'error')
+          return
+        }
+
+        photoUrl = client.storage.from('couple-photos').getPublicUrl(fileName).data.publicUrl
+      }
+
+      const { data: couple, error: coupleError } = await client
+        .from('couples')
+        .insert([{
+          user_id: currentUser.id,
+          prenom_papa,
+          prenom_maman,
+          description,
+          date_terme,
+          nb_enfants_actuels: nb_enfants,
+          items_selectionnes: items,
+          photo_url: photoUrl
+        }])
+        .select()
+        .single()
+
+      if (coupleError) {
+        showMessage('setupMessage', '❌ Erreur: ' + coupleError.message, 'error')
+        return
+      }
+
+      const slug = prenom_papa.toLowerCase() + '-' + prenom_maman.toLowerCase() + '-' + Date.now()
+      const { data: salon, error: salonError } = await client
+        .from('salons')
+        .insert([{ couple_id: couple.id, slug }])
+        .select()
+        .single()
+
+      if (salonError) {
+        showMessage('setupMessage', '❌ Erreur: ' + salonError.message, 'error')
+        return
+      }
+
+      currentCouple = couple
+      currentSalon = salon
+      generateDashboard()
+      generateSidebar()
+      showPage('dashboardAccueil')
+    }
+
+    function generateDashboard() {
+      document.getElementById('dashboardTitle').textContent = currentCouple.prenom_papa + ' & ' + currentCouple.prenom_maman
+      document.getElementById('dashboardEmail').textContent = currentUser.email
+      document.getElementById('dashboardDate').textContent = 'Terme : ' + currentCouple.date_terme
+
+      if (currentCouple.photo_url) {
+        document.getElementById('dashboardPhoto').src = currentCouple.photo_url
+      } else {
+        document.getElementById('dashboardPhoto').src = getAvatarUrl('leaf', currentCouple.prenom_papa)
+      }
+
+      const salonUrl = window.location.origin + window.location.pathname + '?salon=' + currentSalon.slug
+      document.getElementById('salonLink').textContent = salonUrl
+      generateIntroText()
+    }
+
+    function generatePublicPage() {
+      document.getElementById('publicTitle').textContent = currentCouple.prenom_papa + ' & ' + currentCouple.prenom_maman
+      document.getElementById('publicSubtitle').textContent = 'Terme : ' + currentCouple.date_terme
+
+      if (currentCouple.photo_url) {
+        document.getElementById('publicPhoto').src = currentCouple.photo_url
+      } else {
+        document.getElementById('publicPhoto').src = getAvatarUrl('leaf', currentCouple.prenom_papa)
+      }
+
+      generateIntroText()
+    }
+
+    function generateIntroText() {
+      const intro = `Bienvenue dans le salon de pronostics de ${currentCouple.prenom_papa} et ${currentCouple.prenom_maman}! Nous attendons avec impatience l'arrivée de notre petit bout. Partagez vos prédictions et découvrez qui sera le plus proche de la réalité. ${currentCouple.description || 'À bientôt!'}`
+      document.getElementById('introPreview').textContent = intro
+      if (document.getElementById('publicIntro')) {
+        document.getElementById('publicIntro').textContent = intro
       }
     }
 
-    async function envoyerPronostic() {
+    function generateAvatarOptions() {
+      const container = document.getElementById('avatarOptions')
+      if (!container) return
+      container.innerHTML = ''
+      AVATAR_STYLES.forEach(avatar => {
+        const div = document.createElement('div')
+        div.className = 'avatar-option'
+        div.onclick = () => selectAvatar(avatar.style, div)
+        div.innerHTML = `
+          <img src="${getAvatarUrl(avatar.style, 'test')}" class="avatar-preview">
+          <div class="avatar-name">${avatar.name}</div>
+        `
+        container.appendChild(div)
+      })
+    }
+
+    function selectAvatar(style, element) {
+      uploadedPhotoPublic = null
+      selectedAvatar = style
+      document.getElementById('publicPhotoPreview').style.display = 'none'
+      document.getElementById('publicPhotoFile').value = ''
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+      element.classList.add('selected')
+    }
+
+    function generatePublicForm() {
+      const formDiv = document.getElementById('publicFormItems')
+      formDiv.innerHTML = ''
+      const items = currentCouple.items_selectionnes || []
+
+      if (items.includes('sexe')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>👶 Sexe du bébé</label>
+            <select id="form-sexe">
+              <option value="">Choisir</option>
+              <option value="Garçon">Garçon</option>
+              <option value="Fille">Fille</option>
+            </select>
+          </div>
+        `
+      }
+      if (items.includes('prenom')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>📝 Prénom du bébé</label>
+            <input type="text" id="form-prenom" placeholder="Emma">
+          </div>
+        `
+      }
+      if (items.includes('date')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>📅 Date de naissance</label>
+            <input type="date" id="form-date">
+          </div>
+        `
+      }
+      if (items.includes('heure')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>🕐 Heure de naissance</label>
+            <input type="time" id="form-heure">
+          </div>
+        `
+      }
+      if (items.includes('taille')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>📏 Taille (cm)</label>
+            <input type="number" id="form-taille" placeholder="51">
+          </div>
+        `
+      }
+      if (items.includes('poids')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>⚖️ Poids (grammes)</label>
+            <input type="number" id="form-poids" placeholder="3400">
+          </div>
+        `
+      }
+      if (items.includes('cheveux')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>💁 Couleur de cheveux</label>
+            <select id="form-cheveux">
+              <option value="">Choisir</option>
+              <option value="Brun">Brun</option>
+              <option value="Blond">Blond</option>
+              <option value="Roux">Roux</option>
+              <option value="Chauve">Chauve</option>
+            </select>
+          </div>
+        `
+      }
+      if (items.includes('yeux')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>👁️ Couleur des yeux</label>
+            <select id="form-yeux">
+              <option value="">Choisir</option>
+              <option value="Bleu">Bleu</option>
+              <option value="Marron">Marron</option>
+              <option value="Vert">Vert</option>
+              <option value="Noisette">Noisette</option>
+            </select>
+          </div>
+        `
+      }
+      if (items.includes('ressemblance')) {
+        formDiv.innerHTML += `
+          <div class="form-group">
+            <label>👨👩 Ressemblance</label>
+            <select id="form-ressemblance">
+              <option value="">Choisir</option>
+              <option value="Papa">Papa</option>
+              <option value="Maman">Maman</option>
+              <option value="Neutre">Moitié-moitié</option>
+            </select>
+          </div>
+        `
+      }
+    }
+
+    function showPronosticsForm() {
+      document.getElementById('pronosticsFormSection').style.display = 'block'
+    }
+
+    async function submitPublicPronostic() {
+      const nom = document.getElementById('publicNomPrenom').value
+      if (!nom) {
+        showMessage('publicMessage', '❌ Entrez votre nom', 'error')
+        return
+      }
+
+      let photoUrl = null
+      if (uploadedPhotoPublic) {
+        const fileName = Date.now() + '_' + uploadedPhotoPublic.name
+        const { data, error: uploadError } = await client.storage
+          .from('participant-photos')
+          .upload(fileName, uploadedPhotoPublic)
+
+        if (!uploadError) {
+          photoUrl = client.storage.from('participant-photos').getPublicUrl(fileName).data.publicUrl
+        }
+      } else if (selectedAvatar) {
+        photoUrl = getAvatarUrl(selectedAvatar, nom)
+      }
+
       const data = {
-        prenom_participant: document.getElementById('prenom_participant').value,
-        sexe_bebe: document.getElementById('sexe_bebe').value,
-        prenom_bebe: document.getElementById('prenom_bebe').value,
-        date_naissance: document.getElementById('date_naissance').value,
-        heure_naissance: document.getElementById('heure_naissance').value,
-        taille_cm: parseInt(document.getElementById('taille_cm').value),
-        poids_grammes: parseInt(document.getElementById('poids_grammes').value),
-        couleur_cheveux: document.getElementById('couleur_cheveux').value,
-        couleur_yeux: document.getElementById('couleur_yeux').value,
-        ressemblance: document.getElementById('ressemblance').value,
-        user_id: currentUser.id
+        salon_id: currentSalon.id,
+        prenom_participant: nom,
+        photo_url: photoUrl,
+        sexe_bebe: document.getElementById('form-sexe')?.value || null,
+        prenom_bebe: document.getElementById('form-prenom')?.value || null,
+        date_naissance: document.getElementById('form-date')?.value || null,
+        heure_naissance: document.getElementById('form-heure')?.value || null,
+        taille_cm: document.getElementById('form-taille')?.value ? parseInt(document.getElementById('form-taille').value) : null,
+        poids_grammes: document.getElementById('form-poids')?.value ? parseInt(document.getElementById('form-poids').value) : null,
+        couleur_cheveux: document.getElementById('form-cheveux')?.value || null,
+        couleur_yeux: document.getElementById('form-yeux')?.value || null,
+        ressemblance: document.getElementById('form-ressemblance')?.value || null
       }
 
       const { error } = await client.from('pronostics').insert([data])
-
       if (error) {
-        showMessage('formulaireMessage', '❌ ' + error.message, 'error')
+        showMessage('publicMessage', '❌ ' + error.message, 'error')
       } else {
-        showMessage('formulaireMessage', '🎉 Pronostic enregistré !', 'success')
-        document.querySelectorAll('input, select').forEach(el => el.value = '')
-        setTimeout(() => document.getElementById('formulaireMessage').style.display = 'none', 3000)
+        showMessage('publicMessage', '🎉 Pronostic enregistré!', 'success')
+        document.getElementById('publicNomPrenom').value = ''
+        document.getElementById('pronosticsFormSection').style.display = 'none'
+        loadPublicPronostics()
       }
     }
 
-    async function loadResultats() {
-      const { data, error } = await client.from('pronostics').select('*').order('created_at', { ascending: false })
+    async function loadPublicPronostics() {
+      const { data } = await client
+        .from('pronostics')
+        .select('*')
+        .eq('salon_id', currentSalon.id)
+        .order('created_at', { ascending: false })
 
-      if (error) return
-
-      allData = data || []
-      afficherResultats(allData)
-    }
-
-    function afficherResultats(data) {
-      const tbody = document.getElementById('resultatsBody')
+      const tbody = document.getElementById('publicPronosticsBody')
       tbody.innerHTML = ''
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 30px;">Aucun pronostic pour l\'instant</td></tr>'
+        tbody.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
         return
       }
 
       data.forEach(row => {
-        const tr = document.createElement('tr')
-        tr.innerHTML = `
-          <td>${row.prenom_participant}</td>
-          <td>${row.sexe_bebe}</td>
-          <td>${row.prenom_bebe}</td>
-          <td>${row.date_naissance}</td>
-          <td>${row.heure_naissance}</td>
-          <td>${row.taille_cm}cm</td>
-          <td>${row.poids_grammes}g</td>
-          <td>${row.couleur_cheveux}</td>
-          <td>${row.couleur_yeux}</td>
-          <td>${row.ressemblance}</td>
+        const card = document.createElement('div')
+        card.className = 'pronostic-card'
+        card.innerHTML = `
+          <img src="${row.photo_url || getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+          <div class="pronostic-content">
+            <div class="pronostic-name">${row.prenom_participant}</div>
+          </div>
         `
-        tbody.appendChild(tr)
+        tbody.appendChild(card)
       })
     }
 
-    function filterTable() {
-      const filterValue = document.getElementById('filterName').value.toLowerCase()
-      const filtered = allData.filter(item => 
-        item.prenom_participant.toLowerCase().includes(filterValue)
-      )
-      afficherResultats(filtered)
+    async function loadDashboardPronostics() {
+      const { data } = await client
+        .from('pronostics')
+        .select('*')
+        .eq('salon_id', currentSalon.id)
+        .order('created_at', { ascending: false })
+
+      allPronostics = data || []
+      displayDashboardPronostics()
     }
 
-    function sortTable(columnIndex) {
-      const allData = Array.from(document.querySelectorAll('#resultatsBody tr')).map(row => ({
-        cells: row.querySelectorAll('td'),
-        html: row.innerHTML
-      }))
-      
-      allData.sort((a, b) => {
-        const aText = a.cells[columnIndex].textContent
-        const bText = b.cells[columnIndex].textContent
-        return aText.localeCompare(bText)
-      })
+    function displayDashboardPronostics() {
+      const container = document.getElementById('dashboardPronosticsContent')
+      container.innerHTML = ''
 
-      const tbody = document.getElementById('resultatsBody')
-      tbody.innerHTML = ''
-      allData.forEach(item => {
-        const tr = document.createElement('tr')
-        tr.innerHTML = item.html
-        tbody.appendChild(tr)
+      if (!allPronostics || allPronostics.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
+        return
+      }
+
+      allPronostics.forEach(row => {
+        const card = document.createElement('div')
+        card.className = 'pronostic-card'
+        card.innerHTML = `
+          <img src="${row.photo_url || getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+          <div class="pronostic-content">
+            <div class="pronostic-name">${row.prenom_participant}</div>
+          </div>
+          <div class="pronostic-actions">
+            <button class="delete-btn-small" onclick="deletePronostic('${row.id}')">🗑️ Supprimer</button>
+          </div>
+        `
+        container.appendChild(card)
       })
+    }
+
+    async function deletePronostic(id) {
+      if (!confirm('Supprimer ce pronostic ?')) return
+
+      const { error } = await client.from('pronostics').delete().eq('id', id)
+      if (error) {
+        alert('Erreur: ' + error.message)
+      } else {
+        allPronostics = allPronostics.filter(p => p.id !== id)
+        displayDashboardPronostics()
+      }
     }
 
     function verifyAdminCode() {
-      const code = document.getElementById('adminCode').value
-      
+      const code = document.getElementById('adminCodeInput').value
       if (code === ADMIN_CODE) {
         isAdminVerified = true
         document.getElementById('adminContent').style.display = 'block'
-        document.getElementById('adminCodeMessage').style.display = 'none'
-        document.getElementById('adminCode').disabled = true
+        document.getElementById('adminCodeInput').disabled = true
       } else {
-        showMessage('adminCodeMessage', '❌ Code incorrect', 'error')
+        alert('❌ Code incorrect')
       }
     }
 
     async function calculerPoints() {
       if (!isAdminVerified) {
-        showMessage('adminMessage', '❌ Verifie d\'abord le code admin', 'error')
+        showMessage('adminMessage', '❌ Vérifiez d\'abord le code', 'error')
         return
       }
 
@@ -852,16 +1413,14 @@
       const yeux = document.getElementById('adminYeux').value
 
       if (!sexe || !prenom || !date || !heure || !taille || !poids || !cheveux || !yeux) {
-        showMessage('adminMessage', '❌ Remplis tous les champs', 'error')
+        showMessage('adminMessage', '❌ Remplissez tous les champs', 'error')
         return
       }
 
-      const { data: pronostics, error } = await client.from('pronostics').select('*')
-
-      if (error) {
-        showMessage('adminMessage', '❌ Erreur: ' + error.message, 'error')
-        return
-      }
+      const { data: pronostics } = await client
+        .from('pronostics')
+        .select('*')
+        .eq('salon_id', currentSalon.id)
 
       const dateReal = new Date(date)
       const heureRealHours = parseInt(heure.split(':')[0])
@@ -870,62 +1429,54 @@
         let points = 0
         let details = []
 
-        // Sexe (3/5 = 6 pts)
         if (p.sexe_bebe === sexe) {
           points += 6
-          details.push('Sexe ✓')
+          details.push('Sexe')
         }
 
-        // Prénom (5/5 = 10 pts)
-        if (p.prenom_bebe.toLowerCase() === prenom) {
+        if (p.prenom_bebe && p.prenom_bebe.toLowerCase() === prenom) {
           points += 10
-          details.push('Prénom ✓')
+          details.push('Prénom')
         }
 
-        // Date (5/5 = 10 pts, -1/jour)
         const dateProno = new Date(p.date_naissance)
         const jours = Math.abs(Math.floor((dateReal - dateProno) / (1000 * 60 * 60 * 24)))
         const datePoints = Math.max(0, 10 - jours)
         points += datePoints
-        if (datePoints === 10) details.push('Date ✓')
-        else if (datePoints > 0) details.push(`Date -${jours}j`)
+        if (datePoints === 10) details.push('Date')
+        else if (datePoints > 0) details.push(`Date-${jours}j`)
 
-        // Heure (3/5 = 6 pts, -1/heure)
         const heurePronoHours = parseInt(p.heure_naissance.split(':')[0])
         const ecartHeures = Math.abs(heurePronoHours - heureRealHours)
         const heurePoints = Math.max(0, 6 - ecartHeures)
         points += heurePoints
-        if (heurePoints === 6) details.push('Heure ✓')
-        else if (heurePoints > 0) details.push(`Heure -${ecartHeures}h`)
+        if (heurePoints === 6) details.push('Heure')
+        else if (heurePoints > 0) details.push(`Heure-${ecartHeures}h`)
 
-        // Taille (5/5 = 10 pts, -1/cm)
         const ecartTaille = Math.abs(p.taille_cm - taille)
         const taillePoints = Math.max(0, 10 - ecartTaille)
         points += taillePoints
-        if (taillePoints === 10) details.push('Taille ✓')
-        else if (taillePoints > 0) details.push(`Taille -${ecartTaille}cm`)
+        if (taillePoints === 10) details.push('Taille')
 
-        // Poids (5/5 = 10 pts, -1/20g)
         const ecartPoids = Math.abs(p.poids_grammes - poids)
         const poidsPoints = Math.max(0, 10 - Math.floor(ecartPoids / 20))
         points += poidsPoints
-        if (poidsPoints === 10) details.push('Poids ✓')
-        else if (poidsPoints > 0) details.push(`Poids -${Math.floor(ecartPoids / 20)}`)
+        if (poidsPoints === 10) details.push('Poids')
 
-        // Cheveux (2/5 = 4 pts)
         if (p.couleur_cheveux === cheveux) {
           points += 4
-          details.push('Cheveux ✓')
+          details.push('Cheveux')
         }
 
-        // Yeux (3/5 = 6 pts)
         if (p.couleur_yeux === yeux) {
           points += 6
-          details.push('Yeux ✓')
+          details.push('Yeux')
         }
 
         return {
+          id: p.id,
           nom: p.prenom_participant,
+          email: p.email,
           points: Math.round(points),
           details: details.join(' • ')
         }
@@ -936,15 +1487,15 @@
       const tbody = document.getElementById('classementBody')
       tbody.innerHTML = ''
       scores.forEach((score, index) => {
-        const tr = document.createElement('tr')
         const rang = index + 1
         const emojis = ['🥇', '🥈', '🥉']
         const emoji = emojis[index] || (rang + '.')
+        const tr = document.createElement('tr')
         tr.innerHTML = `
           <td class="rank">${emoji}</td>
           <td>${score.nom}</td>
           <td><span class="points-badge">${score.points} pts</span></td>
-          <td style="font-size: 12px; color: #999;">${score.details}</td>
+          <td><button class="delete-btn-small" onclick="deletePronosticById('${score.id}')">🗑️</button></td>
         `
         tbody.appendChild(tr)
       })
@@ -952,8 +1503,81 @@
       showMessage('adminMessage', '✅ Points calculés !', 'success')
     }
 
+    async function deletePronosticById(id) {
+      if (!confirm('Supprimer ce pronostic ?')) return
+      const { error } = await client.from('pronostics').delete().eq('id', id)
+      if (error) {
+        alert('Erreur: ' + error.message)
+      } else {
+        calculerPoints()
+      }
+    }
+
+    async function sendResults() {
+      const winnerEmail = document.getElementById('winnerEmail').value
+      const lotMessage = document.getElementById('lotMessage').value
+
+      if (!winnerEmail) {
+        alert('❌ Entrez l\'email du gagnant')
+        return
+      }
+
+      const sexe = document.getElementById('adminSexe').value
+      const prenom = document.getElementById('adminPrenom').value
+      const date = document.getElementById('adminDate').value
+      const heure = document.getElementById('adminHeure').value
+      const taille = document.getElementById('adminTaille').value
+      const poids = document.getElementById('adminPoids').value
+
+      const classement = document.getElementById('classementBody').innerText
+
+      const templateParams = {
+        to_email: winnerEmail,
+        couple_papa: currentCouple.prenom_papa,
+        couple_maman: currentCouple.prenom_maman,
+        bebe_sexe: sexe,
+        bebe_prenom: prenom,
+        bebe_date: date,
+        bebe_heure: heure,
+        bebe_taille: taille,
+        bebe_poids: poids,
+        classement: classement,
+        lot_message: lotMessage || 'Merci d\'avoir joué!'
+      }
+
+      try {
+        await emailjs.send('service_v9hvgav', 'template_baby-results', templateParams)
+        alert('✅ Email envoyé avec succès!')
+      } catch (error) {
+        alert('❌ Erreur: ' + error.message)
+      }
+    }
+
+    function getAvatarUrl(style, seed) {
+      return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+      document.getElementById(pageId).classList.add('active')
+    }
+
+    function switchPage(pageId) {
+      showPage(pageId)
+      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'))
+      event.target.classList.add('active')
+    }
+
+    function copySalonLink() {
+      const link = document.getElementById('salonLink').textContent
+      navigator.clipboard.writeText(link).then(() => {
+        alert('✅ Lien copié!')
+      })
+    }
+
     function showMessage(elementId, text, type) {
       const el = document.getElementById(elementId)
+      if (!el) return
       el.textContent = text
       el.className = `message ${type}`
       el.style.display = 'block'
