@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍼 Pronostics Bébé</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #fef9f3 0%, #faf6f1 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: 'Crimson Text', serif;
+      font-size: 48px;
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #999;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-group {
+      background: white;
+      padding: 24px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2c2c2c;
+    }
+
+    .label-with-emoji {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .emoji {
+      font-size: 20px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      color: #333;
+      background: #fafafa;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #d4a574;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+    }
+
+    input::placeholder {
+      color: #bbb;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 16px;
+      background: #2c2c2c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #1a1a1a;
+    }
+
+    .button-secondary {
+      background: #f0f0f0;
+      color: #2c2c2c;
+      margin-top: 10px;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .message.success {
+      background: #f0fef4;
+      color: #2d6a34;
+    }
+
+    .message.error {
+      background: #fef4f4;
+      color: #a13030;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #e8e8e8;
+      padding-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #999;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .tab-btn.active {
+      border-bottom-color: #2c2c2c;
+      color: #2c2c2c;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      font-size: 13px;
+    }
+
+    th {
+      background: #f5f5f5;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 13px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .user-email {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .logout-btn {
+      background: #e8896a;
+      font-size: 14px;
+      padding: 10px 20px;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .logout-btn:hover {
+      background: #d4745a;
+    }
+
+    .points-badge {
+      background: #2c2c2c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .rank {
+      font-weight: 600;
+      color: #d4a574;
+      font-size: 16px;
+    }
+
+    .admin-section {
+      background: #fff9f0;
+      border: 2px solid #d4a574;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    .admin-section h3 {
+      margin-bottom: 20px;
+      color: #2c2c2c;
+      font-size: 18px;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page.active {
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .scoring-info {
+      background: #f5f5f5;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE: LOGIN/SIGNUP -->
+  <div id="loginPage" class="page active">
+    <div class="container">
+      <header>
+        <h1>Pronostics Bébé 🍼</h1>
+        <p class="subtitle">Rejoins l'aventure</p>
+      </header>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="ton@email.com">
+      </div>
+
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+
+      <button onclick="handleLogin()">Se connecter 🔐</button>
+      <button class="button-secondary" onclick="toggleSignup()">Créer un compte →</button>
+      <div id="loginMessage" class="message" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: SIGNUP -->
+  <div id="signupPage" class="page">
+    <div class="container">
+      <header>
+        <h1>Pronostics Bébé 🍼</h1>
+        <p class="subtitle">Créer un compte</p>
+      </header>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="ton@email.com">
+      </div>
+
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="signupPassword" placeholder="••••••••">
+      </div>
+
+      <div class="form-group">
+        <label>Confirmer mot de passe</label>
+        <input type="password" id="signupPasswordConfirm" placeholder="••••••••">
+      </div>
+
+      <button onclick="handleSignup()">S'inscrire ✨</button>
+      <button class="button-secondary" onclick="toggleSignup()">← Retour au login</button>
+      <div id="signupMessage" class="message" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: MAIN APP (après login) -->
+  <div id="mainPage" class="page">
+    <div class="container">
+      <div class="user-info">
+        <span class="user-email">Connecté: <strong id="userEmail"></strong></span>
+        <button class="logout-btn" onclick="handleLogout()">Déconnexion</button>
+      </div>
+
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab('formulaire')">📝 Pronostic</button>
+        <button class="tab-btn" onclick="switchTab('resultats')">📊 Résultats</button>
+        <button class="tab-btn" id="adminTab" style="display:none;" onclick="switchTab('admin')">👑 Admin</button>
+      </div>
+
+      <!-- TAB: FORMULAIRE -->
+      <div id="formulaire" class="tab-content active">
+        <header>
+          <h1>Ton pronostic 🎯</h1>
+          <p class="subtitle">Fais tes prédictions</p>
+        </header>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">👤</span> <span>Ton prénom</span></label>
+          <input type="text" id="prenom_participant" placeholder="Marie" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">👶</span> <span>Sexe du bébé</span></label>
+          <select id="sexe_bebe" required>
+            <option value="">Choisir une option</option>
+            <option value="Garçon">👦 Garçon</option>
+            <option value="Fille">👧 Fille</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">📝</span> <span>Prénom du bébé</span></label>
+          <input type="text" id="prenom_bebe" placeholder="Emma" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">📅</span> <span>Date de naissance</span></label>
+          <input type="date" id="date_naissance" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">🕐</span> <span>Heure de naissance</span></label>
+          <input type="time" id="heure_naissance" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">📏</span> <span>Taille (cm)</span></label>
+          <input type="number" id="taille_cm" placeholder="51" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">⚖️</span> <span>Poids (grammes)</span></label>
+          <input type="number" id="poids_grammes" placeholder="3400" required>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">💁</span> <span>Couleur de cheveux</span></label>
+          <select id="couleur_cheveux" required>
+            <option value="">Choisir une option</option>
+            <option value="Brun">🟤 Brun</option>
+            <option value="Blond">🟡 Blond</option>
+            <option value="Roux">🔴 Roux</option>
+            <option value="Chauve">⚪ Chauve</option>
+            <option value="Autres">❓ Autres</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">👁️</span> <span>Couleur des yeux</span></label>
+          <select id="couleur_yeux" required>
+            <option value="">Choisir une option</option>
+            <option value="Bleu">🔵 Bleu</option>
+            <option value="Marron">🟤 Marron</option>
+            <option value="Vert">💚 Vert</option>
+            <option value="Noisette">🟠 Noisette</option>
+            <option value="Autres">❓ Autres</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label-with-emoji"><span class="emoji">👨👩</span> <span>Ressemblance</span></label>
+          <select id="ressemblance" required>
+            <option value="">Choisir une option</option>
+            <option value="Papa">👨 Papa</option>
+            <option value="Maman">👩 Maman</option>
+            <option value="Neutre">☯️ Moitié-moitié</option>
+          </select>
+        </div>
+
+        <button onclick="envoyerPronostic()">Envoyer mon pronostic ✨</button>
+        <div id="formulaireMessage" class="message" style="display:none;"></div>
+      </div>
+
+      <!-- TAB: RESULTATS -->
+      <div id="resultats" class="tab-content">
+        <header>
+          <h1>Tous les pronostics 📊</h1>
+          <p class="subtitle">Découvre les prédictions</p>
+        </header>
+
+        <div style="overflow-x: auto;">
+          <table id="resultatsTable">
+            <thead>
+              <tr>
+                <th>Prénom</th>
+                <th>Sexe</th>
+                <th>Prénom BB</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Taille</th>
+                <th>Poids</th>
+                <th>Cheveux</th>
+                <th>Yeux</th>
+                <th>Ressem.</th>
+              </tr>
+            </thead>
+            <tbody id="resultatsBody">
+              <tr><td colspan="10" style="text-align:center; padding: 30px;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: ADMIN -->
+      <div id="admin" class="tab-content">
+        <header>
+          <h1>Tableau admin 👑</h1>
+          <p class="subtitle">Gère les résultats et les points</p>
+        </header>
+
+        <div class="admin-section">
+          <h3>📋 Vrai résultat du bébé</h3>
+          
+          <div class="form-group">
+            <label>Sexe réal</label>
+            <select id="adminSexe" required>
+              <option value="">Choisir</option>
+              <option value="Garçon">Garçon</option>
+              <option value="Fille">Fille</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prénom réel</label>
+            <input type="text" id="adminPrenom" placeholder="Léa" required>
+          </div>
+
+          <div class="form-group">
+            <label>Date réelle</label>
+            <input type="date" id="adminDate" required>
+          </div>
+
+          <div class="form-group">
+            <label>Heure réelle</label>
+            <input type="time" id="adminHeure" required>
+          </div>
+
+          <div class="form-group">
+            <label>Taille réelle (cm)</label>
+            <input type="number" id="adminTaille" required>
+          </div>
+
+          <div class="form-group">
+            <label>Poids réel (grammes)</label>
+            <input type="number" id="adminPoids" required>
+          </div>
+
+          <div class="form-group">
+            <label>Couleur cheveux réelle</label>
+            <select id="adminCheveux" required>
+              <option value="">Choisir</option>
+              <option value="Brun">Brun</option>
+              <option value="Blond">Blond</option>
+              <option value="Roux">Roux</option>
+              <option value="Chauve">Chauve</option>
+              <option value="Autres">Autres</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Couleur yeux réelle</label>
+            <select id="adminYeux" required>
+              <option value="">Choisir</option>
+              <option value="Bleu">Bleu</option>
+              <option value="Marron">Marron</option>
+              <option value="Vert">Vert</option>
+              <option value="Noisette">Noisette</option>
+              <option value="Autres">Autres</option>
+            </select>
+          </div>
+
+          <button onclick="calculerPoints()">📊 Calculer les points</button>
+          <div id="adminMessage" class="message" style="display:none;"></div>
+        </div>
+
+        <h3>🏆 Classement des points</h3>
+        <div style="overflow-x: auto;">
+          <table id="classementTable">
+            <thead>
+              <tr>
+                <th>Rang</th>
+                <th>Prénom</th>
+                <th>Points</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody id="classementBody">
+              <tr><td colspan="4" style="text-align:center; padding: 30px;">Aucun calcul de points encore</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="scoring-info">
+          <strong>📊 Système de points :</strong><br>
+          Sexe (3/5) : 6 pts | Prénom (5/5) : 10 pts | Date (5/5) : 10 pts (-1/jour)<br>
+          Heure (3/5) : 6 pts (-1/h) | Taille (5/5) : 10 pts (-1/cm) | Poids (5/5) : 10 pts (-1/20g)<br>
+          Cheveux (2/5) : 4 pts | Yeux (3/5) : 6 pts | Ressemblance : non valorisée<br>
+          <strong>Total max : 62 points</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration Supabase
+    const { createClient } = supabase
+    const client = createClient(
+      'https://jbshlixzuulwmuylqgef.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impic2hsaXh6dXVsbXd1eWxxZ2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTY3MTYsImV4cCI6MjA5NjA3MjcxNn0.BOQ4YQTfGT7NW2B5hYQsCf0G_Quu1zEVDYcn2rlFSrI'
+    )
+
+    const ADMIN_EMAIL = 'jbaberard@gmail.com'
+    let currentUser = null
+
+    // Au chargement
+    window.onload = async () => {
+      const { data: { user } } = await client.auth.getUser()
+      if (user) {
+        currentUser = user
+        showMainPage()
+        loadResultats()
+        if (user.email === ADMIN_EMAIL) {
+          document.getElementById('adminTab').style.display = 'block'
+        }
+      }
+    }
+
+    // Gestion de l'inscription
+    function toggleSignup() {
+      document.getElementById('loginPage').classList.toggle('active')
+      document.getElementById('signupPage').classList.toggle('active')
+    }
+
+    async function handleSignup() {
+      const email = document.getElementById('signupEmail').value
+      const password = document.getElementById('signupPassword').value
+      const confirm = document.getElementById('signupPasswordConfirm').value
+
+      if (password !== confirm) {
+        showMessage('signupMessage', 'Les mots de passe ne correspondent pas', 'error')
+        return
+      }
+
+      const { error } = await client.auth.signUp({ email, password })
+
+      if (error) {
+        showMessage('signupMessage', '❌ ' + error.message, 'error')
+      } else {
+        showMessage('signupMessage', '✅ Inscrit ! Tu peux maintenant te connecter', 'success')
+        setTimeout(() => toggleSignup(), 1500)
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value
+      const password = document.getElementById('loginPassword').value
+
+      const { data, error } = await client.auth.signInWithPassword({ email, password })
+
+      if (error) {
+        showMessage('loginMessage', '❌ Email ou mot de passe incorrect', 'error')
+      } else {
+        currentUser = data.user
+        showMainPage()
+      }
+    }
+
+    function showMainPage() {
+      document.getElementById('loginPage').classList.remove('active')
+      document.getElementById('signupPage').classList.remove('active')
+      document.getElementById('mainPage').classList.add('active')
+      document.getElementById('userEmail').textContent = currentUser.email
+    }
+
+    async function handleLogout() {
+      await client.auth.signOut()
+      currentUser = null
+      document.getElementById('mainPage').classList.remove('active')
+      document.getElementById('loginPage').classList.add('active')
+      document.getElementById('loginEmail').value = ''
+      document.getElementById('loginPassword').value = ''
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+      document.getElementById(tabName).classList.add('active')
+      event.target.classList.add('active')
+
+      if (tabName === 'resultats') {
+        loadResultats()
+      }
+    }
+
+    async function envoyerPronostic() {
+      const data = {
+        prenom_participant: document.getElementById('prenom_participant').value,
+        sexe_bebe: document.getElementById('sexe_bebe').value,
+        prenom_bebe: document.getElementById('prenom_bebe').value,
+        date_naissance: document.getElementById('date_naissance').value,
+        heure_naissance: document.getElementById('heure_naissance').value,
+        taille_cm: parseInt(document.getElementById('taille_cm').value),
+        poids_grammes: parseInt(document.getElementById('poids_grammes').value),
+        couleur_cheveux: document.getElementById('couleur_cheveux').value,
+        couleur_yeux: document.getElementById('couleur_yeux').value,
+        ressemblance: document.getElementById('ressemblance').value,
+        user_id: currentUser.id
+      }
+
+      const { error } = await client.from('pronostics').insert([data])
+
+      if (error) {
+        showMessage('formulaireMessage', '❌ ' + error.message, 'error')
+      } else {
+        showMessage('formulaireMessage', '🎉 Pronostic enregistré !', 'success')
+        document.querySelector('form')?.reset?.()
+        setTimeout(() => document.getElementById('formulaireMessage').style.display = 'none', 3000)
+      }
+    }
+
+    async function loadResultats() {
+      const { data, error } = await client.from('pronostics').select('*').order('created_at', { ascending: false })
+
+      if (error) return
+
+      const tbody = document.getElementById('resultatsBody')
+      tbody.innerHTML = ''
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 30px;">Aucun pronostic pour l\'instant</td></tr>'
+        return
+      }
+
+      data.forEach(row => {
+        const tr = document.createElement('tr')
+        tr.innerHTML = `
+          <td>${row.prenom_participant}</td>
+          <td>${row.sexe_bebe}</td>
+          <td>${row.prenom_bebe}</td>
+          <td>${row.date_naissance}</td>
+          <td>${row.heure_naissance}</td>
+          <td>${row.taille_cm}cm</td>
+          <td>${row.poids_grammes}g</td>
+          <td>${row.couleur_cheveux}</td>
+          <td>${row.couleur_yeux}</td>
+          <td>${row.ressemblance}</td>
+        `
+        tbody.appendChild(tr)
+      })
+    }
+
+    async function calculerPoints() {
+      const sexe = document.getElementById('adminSexe').value
+      const prenom = document.getElementById('adminPrenom').value.toLowerCase()
+      const date = document.getElementById('adminDate').value
+      const heure = document.getElementById('adminHeure').value
+      const taille = parseInt(document.getElementById('adminTaille').value)
+      const poids = parseInt(document.getElementById('adminPoids').value)
+      const cheveux = document.getElementById('adminCheveux').value
+      const yeux = document.getElementById('adminYeux').value
+
+      if (!sexe || !prenom || !date || !heure || !taille || !poids || !cheveux || !yeux) {
+        showMessage('adminMessage', '❌ Remplis tous les champs', 'error')
+        return
+      }
+
+      const { data: pronostics, error } = await client.from('pronostics').select('*')
+
+      if (error) {
+        showMessage('adminMessage', '❌ Erreur: ' + error.message, 'error')
+        return
+      }
+
+      const dateReal = new Date(date)
+      const heureRealHours = parseInt(heure.split(':')[0])
+
+      const scores = pronostics.map(p => {
+        let points = 0
+        let details = []
+
+        // Sexe (3/5 = 6 pts)
+        if (p.sexe_bebe === sexe) {
+          points += 6
+          details.push('Sexe ✓')
+        }
+
+        // Prénom (5/5 = 10 pts)
+        if (p.prenom_bebe.toLowerCase() === prenom) {
+          points += 10
+          details.push('Prénom ✓')
+        }
+
+        // Date (5/5 = 10 pts, -1/jour)
+        const dateProno = new Date(p.date_naissance)
+        const jours = Math.abs(Math.floor((dateReal - dateProno) / (1000 * 60 * 60 * 24)))
+        const datePoints = Math.max(0, 10 - jours)
+        points += datePoints
+        if (datePoints === 10) details.push('Date ✓')
+        else if (datePoints > 0) details.push(`Date -${jours}j`)
+
+        // Heure (3/5 = 6 pts, -1/heure)
+        const heurePronoHours = parseInt(p.heure_naissance.split(':')[0])
+        const ecartHeures = Math.abs(heurePronoHours - heureRealHours)
+        const heurePoints = Math.max(0, 6 - ecartHeures)
+        points += heurePoints
+        if (heurePoints === 6) details.push('Heure ✓')
+        else if (heurePoints > 0) details.push(`Heure -${ecartHeures}h`)
+
+        // Taille (5/5 = 10 pts, -1/cm)
+        const ecartTaille = Math.abs(p.taille_cm - taille)
+        const taillePoints = Math.max(0, 10 - ecartTaille)
+        points += taillePoints
+        if (taillePoints === 10) details.push('Taille ✓')
+        else if (taillePoints > 0) details.push(`Taille -${ecartTaille}cm`)
+
+        // Poids (5/5 = 10 pts, -1/20g)
+        const ecartPoids = Math.abs(p.poids_grammes - poids)
+        const poidsPoints = Math.max(0, 10 - Math.floor(ecartPoids / 20))
+        points += poidsPoints
+        if (poidsPoints === 10) details.push('Poids ✓')
+        else if (poidsPoints > 0) details.push(`Poids -${Math.floor(ecartPoids / 20)}`)
+
+        // Cheveux (2/5 = 4 pts)
+        if (p.couleur_cheveux === cheveux) {
+          points += 4
+          details.push('Cheveux ✓')
+        }
+
+        // Yeux (3/5 = 6 pts)
+        if (p.couleur_yeux === yeux) {
+          points += 6
+          details.push('Yeux ✓')
+        }
+
+        // Ressemblance : non valorisée (juste stockée)
+
+        return {
+          nom: p.prenom_participant,
+          points: Math.round(points),
+          details: details.join(' • ')
+        }
+      })
+
+      scores.sort((a, b) => b.points - a.points)
+
+      const tbody = document.getElementById('classementBody')
+      tbody.innerHTML = ''
+      scores.forEach((score, index) => {
+        const tr = document.createElement('tr')
+        const rang = index + 1
+        const emojis = ['🥇', '🥈', '🥉']
+        const emoji = emojis[index] || (rang + '.')
+        tr.innerHTML = `
+          <td class="rank">${emoji}</td>
+          <td>${score.nom}</td>
+          <td><span class="points-badge">${score.points} pts</span></td>
+          <td style="font-size: 12px; color: #999;">${score.details}</td>
+        `
+        tbody.appendChild(tr)
+      })
+
+      showMessage('adminMessage', '✅ Points calculés !', 'success')
+    }
+
+    function showMessage(elementId, text, type) {
+      const el = document.getElementById(elementId)
+      el.textContent = text
+      el.className = `message ${type}`
+      el.style.display = 'block'
+    }
+  </script>
+
+</body>
+</html>
