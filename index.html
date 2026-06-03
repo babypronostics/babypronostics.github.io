@@ -6,6 +6,7 @@
   <title>🍼 Baby Pronostics</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/build/iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-md5@0.7.3/build/md5.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * {
@@ -243,6 +244,11 @@
       height: 100px;
       border-radius: 50%;
       object-fit: cover;
+      font-size: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
     }
 
     .couple-info h2 {
@@ -303,6 +309,11 @@
       border-radius: 8px;
       object-fit: cover;
       flex-shrink: 0;
+      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
     }
 
     .pronostic-content {
@@ -412,14 +423,14 @@
       color: #2c2c2c;
     }
 
-    .avatar-options {
+    .emoji-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
       margin-top: 15px;
     }
 
-    .avatar-option {
+    .emoji-option {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -428,29 +439,19 @@
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
+      font-size: 32px;
+      background: white;
     }
 
-    .avatar-option:hover {
+    .emoji-option:hover {
       border-color: #d4a574;
       background: #fff9f0;
+      transform: scale(1.05);
     }
 
-    .avatar-option.selected {
+    .emoji-option.selected {
       border-color: #2c2c2c;
       background: #f5f5f5;
-    }
-
-    .avatar-preview {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-    }
-
-    .avatar-name {
-      font-size: 12px;
-      color: #666;
-      text-align: center;
     }
 
     .photo-preview {
@@ -591,12 +592,6 @@
       </div>
 
       <div class="form-group">
-        <label>Photo de profil (optionnel)</label>
-        <input type="file" id="setupPhotoFile" accept="image/*">
-        <img id="setupPhotoPreview" class="photo-preview" style="display: none;">
-      </div>
-
-      <div class="form-group">
         <label>Description (optionnel)</label>
         <textarea id="setupDescription" placeholder="Ex: Nous attendons notre premier enfant..."></textarea>
       </div>
@@ -643,7 +638,7 @@
       </div>
 
       <div class="couple-header">
-        <img id="dashboardPhoto" class="couple-photo" src="">
+        <div id="dashboardPhoto" class="couple-photo"></div>
         <div class="couple-info">
           <h2 id="dashboardTitle"></h2>
           <p id="dashboardDate"></p>
@@ -803,7 +798,7 @@
       </header>
 
       <div class="couple-header">
-        <img id="publicPhoto" class="couple-photo" src="">
+        <div id="publicPhoto" class="couple-photo"></div>
         <div class="couple-info">
           <h2 id="publicTitle"></h2>
           <p id="publicSubtitle"></p>
@@ -828,9 +823,9 @@
           <img id="publicPhotoPreview" class="photo-preview" style="display: none;">
         </div>
 
-        <div class="form-group">
-          <label>Ou choisis un avatar :</label>
-          <div class="avatar-options" id="avatarOptions"></div>
+        <div class="form-group" id="emojiContainer" style="display: none;">
+          <label>Ou choisis un emoji :</label>
+          <div class="emoji-grid" id="emojiGrid"></div>
         </div>
 
         <div id="publicFormItems"></div>
@@ -847,30 +842,22 @@
   </div>
 
   <script>
-    // Initialiser EmailJS
     if (typeof emailjs !== 'undefined') {
       emailjs.init('JowEoSeroRdMQL5Wo')
     }
+
+    const EMOJIS = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙁', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤮', '🤧', '🤧', '🤬', '🤬', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🫰', '🤟', '🤘', '🤙', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🤜', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🦷', '🦴', '👀', '👁️', '👅', '👄', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🐒', '🐶', '🦍', '🦧', '🐘', '🐘', '🦏', '🦛', '🐪', '🐫', '🦒', '🦓', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦌', '🐐', '🦌', '🦌', '🦌', '🐕', '🐩', '🦮', '🐈', '🐓', '🦃', '🦚', '🦜', '🦢', '🦗', '🕷️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦓', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦌', '🐐', '🦌', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', '🌚', '⭐', '🌟', '✨', '⚡', '☄️', '💥', '🔥', '🌪️', '🌈', '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨', '💧', '💦', '☔', '🎂', '🍰', '🧁', '🍪', '🍩', '🍫', '🍬', '🍭', '🍮', '🍯', '🎁', '🎀', '🎈', '🎉', '🎊'];
 
     const app = {
       currentUser: null,
       currentSalon: null,
       currentCouple: null,
-      selectedAvatar: null,
-      uploadedPhotoFile: null,
+      selectedEmoji: null,
       uploadedPhotoPublic: null,
       isAdminVerified: false,
       allPronostics: [],
 
       ADMIN_CODE: '8974',
-      AVATAR_STYLES: [
-        { name: 'Leaf', style: 'leaf' },
-        { name: 'Flower', style: 'flower' },
-        { name: 'Critter', style: 'critter' },
-        { name: 'Shapes', style: 'shapes' },
-        { name: 'Rings', style: 'rings' },
-        { name: 'Lorelei', style: 'lorelei' }
-      ],
 
       client: null,
 
@@ -898,31 +885,13 @@
       },
 
       setupEventListeners() {
-        const setupPhotoFile = document.getElementById('setupPhotoFile')
         const publicPhotoFile = document.getElementById('publicPhotoFile')
-
-        if (setupPhotoFile) {
-          setupPhotoFile.addEventListener('change', (e) => {
-            const file = e.target.files[0]
-            if (file) {
-              this.uploadedPhotoFile = file
-              const reader = new FileReader()
-              reader.onload = (event) => {
-                const preview = document.getElementById('setupPhotoPreview')
-                preview.src = event.target.result
-                preview.style.display = 'block'
-              }
-              reader.readAsDataURL(file)
-            }
-          })
-        }
-
         if (publicPhotoFile) {
           publicPhotoFile.addEventListener('change', (e) => {
             const file = e.target.files[0]
             if (file) {
               this.uploadedPhotoPublic = file
-              this.selectedAvatar = null
+              this.selectedEmoji = null
               const preview = document.getElementById('publicPhotoPreview')
               const reader = new FileReader()
               reader.onload = (event) => {
@@ -930,10 +899,15 @@
                 preview.style.display = 'block'
               }
               reader.readAsDataURL(file)
-              document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+              document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'))
             }
           })
         }
+      },
+
+      getGravatarUrl(email) {
+        const hash = md5(email.toLowerCase().trim())
+        return `https://www.gravatar.com/avatar/${hash}?s=200&d=initials`
       },
 
       async loadPublicSalon(slug) {
@@ -952,7 +926,7 @@
         this.currentCouple = salon.couples
         this.generatePublicPage()
         this.showPage('salonPublicPage')
-        this.generateAvatarOptions()
+        this.generateEmojiOptions()
         this.generatePublicForm()
         this.loadPublicPronostics()
       },
@@ -1040,20 +1014,7 @@
         if (document.getElementById('item-yeux').checked) items.push('yeux')
         if (document.getElementById('item-ressemblance').checked) items.push('ressemblance')
 
-        let photoUrl = null
-        if (this.uploadedPhotoFile) {
-          const fileName = Date.now() + '_' + this.uploadedPhotoFile.name
-          const { data, error: uploadError } = await this.client.storage
-            .from('couple-photos')
-            .upload(fileName, this.uploadedPhotoFile)
-
-          if (uploadError) {
-            this.showMessage('setupMessage', '❌ Erreur upload: ' + uploadError.message, 'error')
-            return
-          }
-
-          photoUrl = this.client.storage.from('couple-photos').getPublicUrl(fileName).data.publicUrl
-        }
+        const photoUrl = this.getGravatarUrl(this.currentUser.email)
 
         const { data: couple, error: coupleError } = await this.client
           .from('couples')
@@ -1099,11 +1060,8 @@
         document.getElementById('dashboardEmail').textContent = this.currentUser.email
         document.getElementById('dashboardDate').textContent = 'Terme : ' + this.currentCouple.date_terme
 
-        if (this.currentCouple.photo_url) {
-          document.getElementById('dashboardPhoto').src = this.currentCouple.photo_url
-        } else {
-          document.getElementById('dashboardPhoto').src = this.getAvatarUrl('leaf', this.currentCouple.prenom_papa)
-        }
+        const photoDiv = document.getElementById('dashboardPhoto')
+        photoDiv.innerHTML = `<img src="${this.currentCouple.photo_url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`
 
         const salonUrl = window.location.origin + window.location.pathname + '?salon=' + this.currentSalon.slug
         document.getElementById('salonLink').textContent = salonUrl
@@ -1114,11 +1072,8 @@
         document.getElementById('publicTitle').textContent = this.currentCouple.prenom_papa + ' & ' + this.currentCouple.prenom_maman
         document.getElementById('publicSubtitle').textContent = 'Terme : ' + this.currentCouple.date_terme
 
-        if (this.currentCouple.photo_url) {
-          document.getElementById('publicPhoto').src = this.currentCouple.photo_url
-        } else {
-          document.getElementById('publicPhoto').src = this.getAvatarUrl('leaf', this.currentCouple.prenom_papa)
-        }
+        const photoDiv = document.getElementById('publicPhoto')
+        photoDiv.innerHTML = `<img src="${this.currentCouple.photo_url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`
 
         this.generateIntroText()
       },
@@ -1140,28 +1095,25 @@
         `
       },
 
-      generateAvatarOptions() {
-        const container = document.getElementById('avatarOptions')
+      generateEmojiOptions() {
+        const container = document.getElementById('emojiGrid')
         if (!container) return
         container.innerHTML = ''
-        this.AVATAR_STYLES.forEach(avatar => {
+        EMOJIS.slice(0, 48).forEach(emoji => {
           const div = document.createElement('div')
-          div.className = 'avatar-option'
-          div.onclick = () => this.selectAvatar(avatar.style, div)
-          div.innerHTML = `
-            <img src="${this.getAvatarUrl(avatar.style, 'test')}" class="avatar-preview">
-            <div class="avatar-name">${avatar.name}</div>
-          `
+          div.className = 'emoji-option'
+          div.textContent = emoji
+          div.onclick = () => this.selectEmoji(emoji, div)
           container.appendChild(div)
         })
       },
 
-      selectAvatar(style, element) {
+      selectEmoji(emoji, element) {
         this.uploadedPhotoPublic = null
-        this.selectedAvatar = style
+        this.selectedEmoji = emoji
         document.getElementById('publicPhotoPreview').style.display = 'none'
         document.getElementById('publicPhotoFile').value = ''
-        document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+        document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'))
         element.classList.add('selected')
       },
 
@@ -1220,8 +1172,8 @@
           if (!uploadError) {
             photoUrl = this.client.storage.from('participant-photos').getPublicUrl(fileName).data.publicUrl
           }
-        } else if (this.selectedAvatar) {
-          photoUrl = this.getAvatarUrl(this.selectedAvatar, nom)
+        } else if (this.selectedEmoji) {
+          photoUrl = this.selectedEmoji
         }
 
         const data = {
@@ -1268,8 +1220,11 @@
         data.forEach(row => {
           const card = document.createElement('div')
           card.className = 'pronostic-card'
+          const avatar = row.photo_url && row.photo_url.match(/^https:/) 
+            ? `<img src="${row.photo_url}" style="width: 100%; height: 100%; object-fit: cover;">`
+            : `<span>${row.photo_url || '😀'}</span>`
           card.innerHTML = `
-            <img src="${row.photo_url || this.getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+            <div class="pronostic-avatar">${avatar}</div>
             <div class="pronostic-content">
               <div class="pronostic-name">${row.prenom_participant}</div>
             </div>
@@ -1301,8 +1256,11 @@
         this.allPronostics.forEach(row => {
           const card = document.createElement('div')
           card.className = 'pronostic-card'
+          const avatar = row.photo_url && row.photo_url.match(/^https:/)
+            ? `<img src="${row.photo_url}" style="width: 100%; height: 100%; object-fit: cover;">`
+            : `<span>${row.photo_url || '😀'}</span>`
           card.innerHTML = `
-            <img src="${row.photo_url || this.getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+            <div class="pronostic-avatar">${avatar}</div>
             <div class="pronostic-content">
               <div class="pronostic-name">${row.prenom_participant}</div>
             </div>
@@ -1495,10 +1453,6 @@
         } catch (error) {
           alert('❌ Erreur: ' + error.message)
         }
-      },
-
-      getAvatarUrl(style, seed) {
-        return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`
       },
 
       showPage(pageId) {
