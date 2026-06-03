@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🍼 Baby Pronostics</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/build/iife.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/build/iife.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * {
@@ -63,7 +63,6 @@
       font-weight: 300;
     }
 
-    /* MENU LATÉRAL */
     .sidebar {
       position: fixed;
       left: 0;
@@ -106,6 +105,7 @@
       transition: all 0.2s ease;
       font-weight: 500;
       margin-bottom: 8px;
+      cursor: pointer;
     }
 
     .sidebar-item:hover {
@@ -198,14 +198,6 @@
 
     .button-secondary:hover {
       background: #e0e0e0;
-    }
-
-    .button-danger {
-      background: #e8896a;
-    }
-
-    .button-danger:hover {
-      background: #d4745a;
     }
 
     .message {
@@ -336,6 +328,8 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
+      width: auto;
+      margin: 0;
     }
 
     .delete-btn-small:hover {
@@ -533,8 +527,8 @@
         <input type="password" id="loginPassword" placeholder="••••••••">
       </div>
 
-      <button onclick="handleLogin()">Se connecter 🔐</button>
-      <button class="button-secondary" onclick="toggleSignup()">Créer un compte →</button>
+      <button onclick="app.handleLogin()">Se connecter 🔐</button>
+      <button class="button-secondary" onclick="app.toggleSignup()">Créer un compte →</button>
       <div id="loginMessage" class="message" style="display:none;"></div>
     </div>
   </div>
@@ -567,8 +561,8 @@
         <input type="password" id="signupPasswordConfirm" placeholder="••••••••">
       </div>
 
-      <button onclick="handleSignup()">S'inscrire ✨</button>
-      <button class="button-secondary" onclick="toggleSignup()">← Retour</button>
+      <button onclick="app.handleSignup()">S'inscrire ✨</button>
+      <button class="button-secondary" onclick="app.toggleSignup()">← Retour</button>
       <div id="signupMessage" class="message" style="display:none;"></div>
     </div>
   </div>
@@ -630,7 +624,7 @@
         <div class="checkbox-item"><input type="checkbox" id="item-ressemblance"><label>👨👩 Ressemblance</label></div>
       </div>
 
-      <button onclick="createSalon()">Créer le salon 🚀</button>
+      <button onclick="app.createSalon()">Créer le salon 🚀</button>
       <div id="setupMessage" class="message" style="display:none;"></div>
     </div>
   </div>
@@ -645,7 +639,7 @@
 
       <div class="user-info">
         <span>Connecté: <strong id="dashboardEmail"></strong></span>
-        <button class="logout-btn" onclick="handleLogout()">Déconnexion</button>
+        <button class="logout-btn" onclick="app.handleLogout()">Déconnexion</button>
       </div>
 
       <div class="couple-header">
@@ -659,7 +653,7 @@
       <div class="link-section">
         <h3>Lien à partager</h3>
         <div class="link-input" id="salonLink"></div>
-        <button class="copy-btn" onclick="copySalonLink()">Copier 📋</button>
+        <button class="copy-btn" onclick="app.copySalonLink()">Copier 📋</button>
       </div>
 
       <div class="intro-text" id="introPreview"></div>
@@ -700,7 +694,7 @@
         <div class="form-group">
           <label>Code admin</label>
           <input type="password" id="adminCodeInput" placeholder="Tapez le code">
-          <button onclick="verifyAdminCode()" style="margin-top: 10px;">Valider</button>
+          <button onclick="app.verifyAdminCode()">Valider</button>
         </div>
       </div>
 
@@ -764,7 +758,7 @@
             </select>
           </div>
 
-          <button onclick="calculerPoints()">📊 Calculer points</button>
+          <button onclick="app.calculerPoints()">📊 Calculer points</button>
           <div id="adminMessage" class="message" style="display:none;"></div>
         </div>
 
@@ -795,7 +789,7 @@
             <label>Message personnalisé (optionnel)</label>
             <textarea id="lotMessage" placeholder="Ex: Un lot attend le gagnant!"></textarea>
           </div>
-          <button onclick="sendResults()" style="background: #2c8c42;">📧 Envoyer l'email</button>
+          <button onclick="app.sendResults()" style="background: #2c8c42;">📧 Envoyer l'email</button>
         </div>
       </div>
     </div>
@@ -818,7 +812,7 @@
 
       <div class="intro-text" id="publicIntro"></div>
 
-      <button onclick="showPronosticsForm()">Faire un pronostic 🎯</button>
+      <button onclick="app.showPronosticsForm()">Faire un pronostic 🎯</button>
 
       <div id="pronosticsFormSection" style="display: none; margin-top: 40px;">
         <h3 style="margin-bottom: 20px;">Saisissez vos prédictions</h3>
@@ -841,7 +835,7 @@
 
         <div id="publicFormItems"></div>
 
-        <button onclick="submitPublicPronostic()">Envoyer ✨</button>
+        <button onclick="app.submitPublicPronostic()">Envoyer ✨</button>
         <div id="publicMessage" class="message" style="display:none;"></div>
       </div>
 
@@ -853,45 +847,684 @@
   </div>
 
   <script>
-    emailjs.init('JowEoSeroRdMQL5Wo')
+    // Initialiser EmailJS
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init('JowEoSeroRdMQL5Wo')
+    }
 
-    const { createClient } = supabase
-    const client = createClient(
-      'https://jbshlixzuulwmuylqgef.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impic2hsaXh6dXVsd211eWxxZ2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTY3MTYsImV4cCI6MjA5NjA3MjcxNn0.BOQ4YQTfGT7NW2B5hYQsCf0G_Quu1zEVDYcn2rlFSrI'
-    )
+    const app = {
+      currentUser: null,
+      currentSalon: null,
+      currentCouple: null,
+      selectedAvatar: null,
+      uploadedPhotoFile: null,
+      uploadedPhotoPublic: null,
+      isAdminVerified: false,
+      allPronostics: [],
 
-    let currentUser = null
-    let currentSalon = null
-    let currentCouple = null
-    let selectedAvatar = null
-    let uploadedPhotoFile = null
-    let uploadedPhotoPublic = null
-    let isAdminVerified = false
-    let allPronostics = []
+      ADMIN_CODE: '8974',
+      AVATAR_STYLES: [
+        { name: 'Leaf', style: 'leaf' },
+        { name: 'Flower', style: 'flower' },
+        { name: 'Critter', style: 'critter' },
+        { name: 'Shapes', style: 'shapes' },
+        { name: 'Rings', style: 'rings' },
+        { name: 'Lorelei', style: 'lorelei' }
+      ],
 
-    const ADMIN_CODE = '8974'
-    const AVATAR_STYLES = [
-      { name: 'Leaf', style: 'leaf' },
-      { name: 'Flower', style: 'flower' },
-      { name: 'Critter', style: 'critter' },
-      { name: 'Shapes', style: 'shapes' },
-      { name: 'Rings', style: 'rings' },
-      { name: 'Lorelei', style: 'lorelei' }
-    ]
+      client: null,
 
-    window.onload = async () => {
-      const params = new URLSearchParams(window.location.search)
-      const salonSlug = params.get('salon')
+      async init() {
+        const { createClient } = supabase
+        this.client = createClient(
+          'https://jbshlixzuulwmuylqgef.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impic2hsaXh6dXVsd211eWxxZ2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTY3MTYsImV4cCI6MjA5NjA3MjcxNn0.BOQ4YQTfGT7NW2B5hYQsCf0G_Quu1zEVDYcn2rlFSrI'
+        )
 
-      if (salonSlug) {
-        await loadPublicSalon(salonSlug)
-      } else {
-        const { data: { user } } = await client.auth.getUser()
-        if (user) {
-          currentUser = user
-          await loadUserSalon()
+        const params = new URLSearchParams(window.location.search)
+        const salonSlug = params.get('salon')
+
+        if (salonSlug) {
+          await this.loadPublicSalon(salonSlug)
+        } else {
+          const { data: { user } } = await this.client.auth.getUser()
+          if (user) {
+            this.currentUser = user
+            await this.loadUserSalon()
+          }
         }
+
+        this.setupEventListeners()
+      },
+
+      setupEventListeners() {
+        const setupPhotoFile = document.getElementById('setupPhotoFile')
+        const publicPhotoFile = document.getElementById('publicPhotoFile')
+
+        if (setupPhotoFile) {
+          setupPhotoFile.addEventListener('change', (e) => {
+            const file = e.target.files[0]
+            if (file) {
+              this.uploadedPhotoFile = file
+              const reader = new FileReader()
+              reader.onload = (event) => {
+                const preview = document.getElementById('setupPhotoPreview')
+                preview.src = event.target.result
+                preview.style.display = 'block'
+              }
+              reader.readAsDataURL(file)
+            }
+          })
+        }
+
+        if (publicPhotoFile) {
+          publicPhotoFile.addEventListener('change', (e) => {
+            const file = e.target.files[0]
+            if (file) {
+              this.uploadedPhotoPublic = file
+              this.selectedAvatar = null
+              const preview = document.getElementById('publicPhotoPreview')
+              const reader = new FileReader()
+              reader.onload = (event) => {
+                preview.src = event.target.result
+                preview.style.display = 'block'
+              }
+              reader.readAsDataURL(file)
+              document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+            }
+          })
+        }
+      },
+
+      async loadPublicSalon(slug) {
+        const { data: salon, error } = await this.client
+          .from('salons')
+          .select('*, couples(*)')
+          .eq('slug', slug)
+          .single()
+
+        if (error || !salon) {
+          this.showPage('loginPage')
+          return
+        }
+
+        this.currentSalon = salon
+        this.currentCouple = salon.couples
+        this.generatePublicPage()
+        this.showPage('salonPublicPage')
+        this.generateAvatarOptions()
+        this.generatePublicForm()
+        this.loadPublicPronostics()
+      },
+
+      async loadUserSalon() {
+        const { data: couple } = await this.client
+          .from('couples')
+          .select('*, salons(*)')
+          .eq('user_id', this.currentUser.id)
+          .single()
+
+        if (!couple || !couple.salons || couple.salons.length === 0) {
+          this.showPage('setupPage')
+        } else {
+          this.currentCouple = couple
+          this.currentSalon = couple.salons[0]
+          this.generateDashboard()
+          this.generateSidebar()
+          this.showPage('dashboardAccueil')
+          this.loadDashboardPronostics()
+        }
+      },
+
+      toggleSignup() {
+        document.getElementById('loginPage').classList.toggle('active')
+        document.getElementById('signupPage').classList.toggle('active')
+      },
+
+      async handleSignup() {
+        const email = document.getElementById('signupEmail').value
+        const password = document.getElementById('signupPassword').value
+        const confirm = document.getElementById('signupPasswordConfirm').value
+
+        if (password !== confirm) {
+          this.showMessage('signupMessage', 'Les mots de passe ne correspondent pas', 'error')
+          return
+        }
+
+        const { error } = await this.client.auth.signUp({ email, password })
+        if (error) {
+          this.showMessage('signupMessage', '❌ ' + error.message, 'error')
+        } else {
+          this.showMessage('signupMessage', '✅ Compte créé ! Veuillez vous connecter.', 'success')
+          setTimeout(() => this.toggleSignup(), 1500)
+        }
+      },
+
+      async handleLogin() {
+        const email = document.getElementById('loginEmail').value
+        const password = document.getElementById('loginPassword').value
+
+        const { data, error } = await this.client.auth.signInWithPassword({ email, password })
+        if (error) {
+          this.showMessage('loginMessage', '❌ Email ou mot de passe incorrect', 'error')
+        } else {
+          this.currentUser = data.user
+          await this.loadUserSalon()
+        }
+      },
+
+      async handleLogout() {
+        await this.client.auth.signOut()
+        this.currentUser = null
+        this.currentCouple = null
+        this.currentSalon = null
+        this.isAdminVerified = false
+        this.showPage('loginPage')
+      },
+
+      async createSalon() {
+        const prenom_papa = document.getElementById('setupPapaPm').value
+        const prenom_maman = document.getElementById('setupMamanPm').value
+        const description = document.getElementById('setupDescription').value
+        const date_terme = document.getElementById('setupDateTerme').value
+        const nb_enfants = parseInt(document.getElementById('setupNbEnfants').value)
+
+        const items = []
+        if (document.getElementById('item-sexe').checked) items.push('sexe')
+        if (document.getElementById('item-prenom').checked) items.push('prenom')
+        if (document.getElementById('item-date').checked) items.push('date')
+        if (document.getElementById('item-heure').checked) items.push('heure')
+        if (document.getElementById('item-taille').checked) items.push('taille')
+        if (document.getElementById('item-poids').checked) items.push('poids')
+        if (document.getElementById('item-cheveux').checked) items.push('cheveux')
+        if (document.getElementById('item-yeux').checked) items.push('yeux')
+        if (document.getElementById('item-ressemblance').checked) items.push('ressemblance')
+
+        let photoUrl = null
+        if (this.uploadedPhotoFile) {
+          const fileName = Date.now() + '_' + this.uploadedPhotoFile.name
+          const { data, error: uploadError } = await this.client.storage
+            .from('couple-photos')
+            .upload(fileName, this.uploadedPhotoFile)
+
+          if (uploadError) {
+            this.showMessage('setupMessage', '❌ Erreur upload: ' + uploadError.message, 'error')
+            return
+          }
+
+          photoUrl = this.client.storage.from('couple-photos').getPublicUrl(fileName).data.publicUrl
+        }
+
+        const { data: couple, error: coupleError } = await this.client
+          .from('couples')
+          .insert([{
+            user_id: this.currentUser.id,
+            prenom_papa,
+            prenom_maman,
+            description,
+            date_terme,
+            nb_enfants_actuels: nb_enfants,
+            items_selectionnes: items,
+            photo_url: photoUrl
+          }])
+          .select()
+          .single()
+
+        if (coupleError) {
+          this.showMessage('setupMessage', '❌ Erreur: ' + coupleError.message, 'error')
+          return
+        }
+
+        const slug = prenom_papa.toLowerCase() + '-' + prenom_maman.toLowerCase() + '-' + Date.now()
+        const { data: salon, error: salonError } = await this.client
+          .from('salons')
+          .insert([{ couple_id: couple.id, slug }])
+          .select()
+          .single()
+
+        if (salonError) {
+          this.showMessage('setupMessage', '❌ Erreur: ' + salonError.message, 'error')
+          return
+        }
+
+        this.currentCouple = couple
+        this.currentSalon = salon
+        this.generateDashboard()
+        this.generateSidebar()
+        this.showPage('dashboardAccueil')
+      },
+
+      generateDashboard() {
+        document.getElementById('dashboardTitle').textContent = this.currentCouple.prenom_papa + ' & ' + this.currentCouple.prenom_maman
+        document.getElementById('dashboardEmail').textContent = this.currentUser.email
+        document.getElementById('dashboardDate').textContent = 'Terme : ' + this.currentCouple.date_terme
+
+        if (this.currentCouple.photo_url) {
+          document.getElementById('dashboardPhoto').src = this.currentCouple.photo_url
+        } else {
+          document.getElementById('dashboardPhoto').src = this.getAvatarUrl('leaf', this.currentCouple.prenom_papa)
+        }
+
+        const salonUrl = window.location.origin + window.location.pathname + '?salon=' + this.currentSalon.slug
+        document.getElementById('salonLink').textContent = salonUrl
+        this.generateIntroText()
+      },
+
+      generatePublicPage() {
+        document.getElementById('publicTitle').textContent = this.currentCouple.prenom_papa + ' & ' + this.currentCouple.prenom_maman
+        document.getElementById('publicSubtitle').textContent = 'Terme : ' + this.currentCouple.date_terme
+
+        if (this.currentCouple.photo_url) {
+          document.getElementById('publicPhoto').src = this.currentCouple.photo_url
+        } else {
+          document.getElementById('publicPhoto').src = this.getAvatarUrl('leaf', this.currentCouple.prenom_papa)
+        }
+
+        this.generateIntroText()
+      },
+
+      generateIntroText() {
+        const intro = `Bienvenue dans le salon de pronostics de ${this.currentCouple.prenom_papa} et ${this.currentCouple.prenom_maman}! Nous attendons avec impatience l'arrivée de notre petit bout. Partagez vos prédictions et découvrez qui sera le plus proche de la réalité. ${this.currentCouple.description || 'À bientôt!'}`
+        document.getElementById('introPreview').textContent = intro
+        if (document.getElementById('publicIntro')) {
+          document.getElementById('publicIntro').textContent = intro
+        }
+      },
+
+      generateSidebar() {
+        const content = document.getElementById('sidebarContent')
+        content.innerHTML = `
+          <a class="sidebar-item active" onclick="app.switchPage('dashboardAccueil'); toggleSidebar();">🏠 Accueil</a>
+          <a class="sidebar-item" onclick="app.switchPage('dashboardPronostics'); toggleSidebar();">📊 Pronostics</a>
+          <a class="sidebar-item" onclick="app.switchPage('dashboardResultats'); toggleSidebar();">🏆 Résultats</a>
+        `
+      },
+
+      generateAvatarOptions() {
+        const container = document.getElementById('avatarOptions')
+        if (!container) return
+        container.innerHTML = ''
+        this.AVATAR_STYLES.forEach(avatar => {
+          const div = document.createElement('div')
+          div.className = 'avatar-option'
+          div.onclick = () => this.selectAvatar(avatar.style, div)
+          div.innerHTML = `
+            <img src="${this.getAvatarUrl(avatar.style, 'test')}" class="avatar-preview">
+            <div class="avatar-name">${avatar.name}</div>
+          `
+          container.appendChild(div)
+        })
+      },
+
+      selectAvatar(style, element) {
+        this.uploadedPhotoPublic = null
+        this.selectedAvatar = style
+        document.getElementById('publicPhotoPreview').style.display = 'none'
+        document.getElementById('publicPhotoFile').value = ''
+        document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
+        element.classList.add('selected')
+      },
+
+      generatePublicForm() {
+        const formDiv = document.getElementById('publicFormItems')
+        formDiv.innerHTML = ''
+        const items = this.currentCouple.items_selectionnes || []
+
+        if (items.includes('sexe')) {
+          formDiv.innerHTML += `<div class="form-group"><label>👶 Sexe</label><select id="form-sexe"><option value="">Choisir</option><option value="Garçon">Garçon</option><option value="Fille">Fille</option></select></div>`
+        }
+        if (items.includes('prenom')) {
+          formDiv.innerHTML += `<div class="form-group"><label>📝 Prénom</label><input type="text" id="form-prenom" placeholder="Emma"></div>`
+        }
+        if (items.includes('date')) {
+          formDiv.innerHTML += `<div class="form-group"><label>📅 Date</label><input type="date" id="form-date"></div>`
+        }
+        if (items.includes('heure')) {
+          formDiv.innerHTML += `<div class="form-group"><label>🕐 Heure</label><input type="time" id="form-heure"></div>`
+        }
+        if (items.includes('taille')) {
+          formDiv.innerHTML += `<div class="form-group"><label>📏 Taille (cm)</label><input type="number" id="form-taille" placeholder="51"></div>`
+        }
+        if (items.includes('poids')) {
+          formDiv.innerHTML += `<div class="form-group"><label>⚖️ Poids (g)</label><input type="number" id="form-poids" placeholder="3400"></div>`
+        }
+        if (items.includes('cheveux')) {
+          formDiv.innerHTML += `<div class="form-group"><label>💁 Cheveux</label><select id="form-cheveux"><option value="">Choisir</option><option value="Brun">Brun</option><option value="Blond">Blond</option><option value="Roux">Roux</option><option value="Chauve">Chauve</option></select></div>`
+        }
+        if (items.includes('yeux')) {
+          formDiv.innerHTML += `<div class="form-group"><label>👁️ Yeux</label><select id="form-yeux"><option value="">Choisir</option><option value="Bleu">Bleu</option><option value="Marron">Marron</option><option value="Vert">Vert</option><option value="Noisette">Noisette</option></select></div>`
+        }
+        if (items.includes('ressemblance')) {
+          formDiv.innerHTML += `<div class="form-group"><label>👨👩 Ressemblance</label><select id="form-ressemblance"><option value="">Choisir</option><option value="Papa">Papa</option><option value="Maman">Maman</option><option value="Neutre">Moitié-moitié</option></select></div>`
+        }
+      },
+
+      showPronosticsForm() {
+        document.getElementById('pronosticsFormSection').style.display = 'block'
+      },
+
+      async submitPublicPronostic() {
+        const nom = document.getElementById('publicNomPrenom').value
+        if (!nom) {
+          this.showMessage('publicMessage', '❌ Entrez votre nom', 'error')
+          return
+        }
+
+        let photoUrl = null
+        if (this.uploadedPhotoPublic) {
+          const fileName = Date.now() + '_' + this.uploadedPhotoPublic.name
+          const { data, error: uploadError } = await this.client.storage
+            .from('participant-photos')
+            .upload(fileName, this.uploadedPhotoPublic)
+
+          if (!uploadError) {
+            photoUrl = this.client.storage.from('participant-photos').getPublicUrl(fileName).data.publicUrl
+          }
+        } else if (this.selectedAvatar) {
+          photoUrl = this.getAvatarUrl(this.selectedAvatar, nom)
+        }
+
+        const data = {
+          salon_id: this.currentSalon.id,
+          prenom_participant: nom,
+          photo_url: photoUrl,
+          sexe_bebe: document.getElementById('form-sexe')?.value || null,
+          prenom_bebe: document.getElementById('form-prenom')?.value || null,
+          date_naissance: document.getElementById('form-date')?.value || null,
+          heure_naissance: document.getElementById('form-heure')?.value || null,
+          taille_cm: document.getElementById('form-taille')?.value ? parseInt(document.getElementById('form-taille').value) : null,
+          poids_grammes: document.getElementById('form-poids')?.value ? parseInt(document.getElementById('form-poids').value) : null,
+          couleur_cheveux: document.getElementById('form-cheveux')?.value || null,
+          couleur_yeux: document.getElementById('form-yeux')?.value || null,
+          ressemblance: document.getElementById('form-ressemblance')?.value || null
+        }
+
+        const { error } = await this.client.from('pronostics').insert([data])
+        if (error) {
+          this.showMessage('publicMessage', '❌ ' + error.message, 'error')
+        } else {
+          this.showMessage('publicMessage', '🎉 Pronostic enregistré!', 'success')
+          document.getElementById('publicNomPrenom').value = ''
+          document.getElementById('pronosticsFormSection').style.display = 'none'
+          this.loadPublicPronostics()
+        }
+      },
+
+      async loadPublicPronostics() {
+        const { data } = await this.client
+          .from('pronostics')
+          .select('*')
+          .eq('salon_id', this.currentSalon.id)
+          .order('created_at', { ascending: false })
+
+        const tbody = document.getElementById('publicPronosticsBody')
+        tbody.innerHTML = ''
+
+        if (!data || data.length === 0) {
+          tbody.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
+          return
+        }
+
+        data.forEach(row => {
+          const card = document.createElement('div')
+          card.className = 'pronostic-card'
+          card.innerHTML = `
+            <img src="${row.photo_url || this.getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+            <div class="pronostic-content">
+              <div class="pronostic-name">${row.prenom_participant}</div>
+            </div>
+          `
+          tbody.appendChild(card)
+        })
+      },
+
+      async loadDashboardPronostics() {
+        const { data } = await this.client
+          .from('pronostics')
+          .select('*')
+          .eq('salon_id', this.currentSalon.id)
+          .order('created_at', { ascending: false })
+
+        this.allPronostics = data || []
+        this.displayDashboardPronostics()
+      },
+
+      displayDashboardPronostics() {
+        const container = document.getElementById('dashboardPronosticsContent')
+        container.innerHTML = ''
+
+        if (!this.allPronostics || this.allPronostics.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
+          return
+        }
+
+        this.allPronostics.forEach(row => {
+          const card = document.createElement('div')
+          card.className = 'pronostic-card'
+          card.innerHTML = `
+            <img src="${row.photo_url || this.getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
+            <div class="pronostic-content">
+              <div class="pronostic-name">${row.prenom_participant}</div>
+            </div>
+            <div class="pronostic-actions">
+              <button class="delete-btn-small" onclick="app.deletePronostic('${row.id}')">🗑️ Supprimer</button>
+            </div>
+          `
+          container.appendChild(card)
+        })
+      },
+
+      async deletePronostic(id) {
+        if (!confirm('Supprimer ce pronostic ?')) return
+
+        const { error } = await this.client.from('pronostics').delete().eq('id', id)
+        if (error) {
+          alert('Erreur: ' + error.message)
+        } else {
+          this.allPronostics = this.allPronostics.filter(p => p.id !== id)
+          this.displayDashboardPronostics()
+        }
+      },
+
+      verifyAdminCode() {
+        const code = document.getElementById('adminCodeInput').value
+        if (code === this.ADMIN_CODE) {
+          this.isAdminVerified = true
+          document.getElementById('adminContent').style.display = 'block'
+          document.getElementById('adminCodeInput').disabled = true
+        } else {
+          alert('❌ Code incorrect')
+        }
+      },
+
+      async calculerPoints() {
+        if (!this.isAdminVerified) {
+          this.showMessage('adminMessage', '❌ Vérifiez d\'abord le code', 'error')
+          return
+        }
+
+        const sexe = document.getElementById('adminSexe').value
+        const prenom = document.getElementById('adminPrenom').value.toLowerCase()
+        const date = document.getElementById('adminDate').value
+        const heure = document.getElementById('adminHeure').value
+        const taille = parseInt(document.getElementById('adminTaille').value)
+        const poids = parseInt(document.getElementById('adminPoids').value)
+        const cheveux = document.getElementById('adminCheveux').value
+        const yeux = document.getElementById('adminYeux').value
+
+        if (!sexe || !prenom || !date || !heure || !taille || !poids || !cheveux || !yeux) {
+          this.showMessage('adminMessage', '❌ Remplissez tous les champs', 'error')
+          return
+        }
+
+        const { data: pronostics } = await this.client
+          .from('pronostics')
+          .select('*')
+          .eq('salon_id', this.currentSalon.id)
+
+        const dateReal = new Date(date)
+        const heureRealHours = parseInt(heure.split(':')[0])
+
+        const scores = pronostics.map(p => {
+          let points = 0
+          let details = []
+
+          if (p.sexe_bebe === sexe) {
+            points += 6
+            details.push('Sexe')
+          }
+
+          if (p.prenom_bebe && p.prenom_bebe.toLowerCase() === prenom) {
+            points += 10
+            details.push('Prénom')
+          }
+
+          const dateProno = new Date(p.date_naissance)
+          const jours = Math.abs(Math.floor((dateReal - dateProno) / (1000 * 60 * 60 * 24)))
+          const datePoints = Math.max(0, 10 - jours)
+          points += datePoints
+          if (datePoints === 10) details.push('Date')
+          else if (datePoints > 0) details.push(`Date-${jours}j`)
+
+          const heurePronoHours = parseInt(p.heure_naissance.split(':')[0])
+          const ecartHeures = Math.abs(heurePronoHours - heureRealHours)
+          const heurePoints = Math.max(0, 6 - ecartHeures)
+          points += heurePoints
+          if (heurePoints === 6) details.push('Heure')
+          else if (heurePoints > 0) details.push(`Heure-${ecartHeures}h`)
+
+          const ecartTaille = Math.abs(p.taille_cm - taille)
+          const taillePoints = Math.max(0, 10 - ecartTaille)
+          points += taillePoints
+          if (taillePoints === 10) details.push('Taille')
+
+          const ecartPoids = Math.abs(p.poids_grammes - poids)
+          const poidsPoints = Math.max(0, 10 - Math.floor(ecartPoids / 20))
+          points += poidsPoints
+          if (poidsPoints === 10) details.push('Poids')
+
+          if (p.couleur_cheveux === cheveux) {
+            points += 4
+            details.push('Cheveux')
+          }
+
+          if (p.couleur_yeux === yeux) {
+            points += 6
+            details.push('Yeux')
+          }
+
+          return {
+            id: p.id,
+            nom: p.prenom_participant,
+            points: Math.round(points),
+            details: details.join(' • ')
+          }
+        })
+
+        scores.sort((a, b) => b.points - a.points)
+
+        const tbody = document.getElementById('classementBody')
+        tbody.innerHTML = ''
+        scores.forEach((score, index) => {
+          const rang = index + 1
+          const emojis = ['🥇', '🥈', '🥉']
+          const emoji = emojis[index] || (rang + '.')
+          const tr = document.createElement('tr')
+          tr.innerHTML = `
+            <td class="rank">${emoji}</td>
+            <td>${score.nom}</td>
+            <td><span class="points-badge">${score.points} pts</span></td>
+            <td><button class="delete-btn-small" onclick="app.deletePronosticById('${score.id}')">🗑️</button></td>
+          `
+          tbody.appendChild(tr)
+        })
+
+        this.showMessage('adminMessage', '✅ Points calculés !', 'success')
+      },
+
+      async deletePronosticById(id) {
+        if (!confirm('Supprimer ce pronostic ?')) return
+        const { error } = await this.client.from('pronostics').delete().eq('id', id)
+        if (error) {
+          alert('Erreur: ' + error.message)
+        } else {
+          this.calculerPoints()
+        }
+      },
+
+      async sendResults() {
+        const winnerEmail = document.getElementById('winnerEmail').value
+        const lotMessage = document.getElementById('lotMessage').value
+
+        if (!winnerEmail) {
+          alert('❌ Entrez l\'email du gagnant')
+          return
+        }
+
+        if (typeof emailjs === 'undefined') {
+          alert('❌ EmailJS non chargé')
+          return
+        }
+
+        const sexe = document.getElementById('adminSexe').value
+        const prenom = document.getElementById('adminPrenom').value
+        const date = document.getElementById('adminDate').value
+        const heure = document.getElementById('adminHeure').value
+        const taille = document.getElementById('adminTaille').value
+        const poids = document.getElementById('adminPoids').value
+
+        const classement = document.getElementById('classementBody').innerText
+
+        const templateParams = {
+          to_email: winnerEmail,
+          couple_papa: this.currentCouple.prenom_papa,
+          couple_maman: this.currentCouple.prenom_maman,
+          bebe_sexe: sexe,
+          bebe_prenom: prenom,
+          bebe_date: date,
+          bebe_heure: heure,
+          bebe_taille: taille,
+          bebe_poids: poids,
+          classement: classement,
+          lot_message: lotMessage || 'Merci d\'avoir joué!'
+        }
+
+        try {
+          await emailjs.send('service_v9hvgav', 'template_baby-results', templateParams)
+          alert('✅ Email envoyé avec succès!')
+        } catch (error) {
+          alert('❌ Erreur: ' + error.message)
+        }
+      },
+
+      getAvatarUrl(style, seed) {
+        return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`
+      },
+
+      showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+        document.getElementById(pageId).classList.add('active')
+      },
+
+      switchPage(pageId) {
+        this.showPage(pageId)
+        document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'))
+        event.target.classList.add('active')
+      },
+
+      copySalonLink() {
+        const link = document.getElementById('salonLink').textContent
+        navigator.clipboard.writeText(link).then(() => {
+          alert('✅ Lien copié!')
+        })
+      },
+
+      showMessage(elementId, text, type) {
+        const el = document.getElementById(elementId)
+        if (!el) return
+        el.textContent = text
+        el.className = `message ${type}`
+        el.style.display = 'block'
       }
     }
 
@@ -899,689 +1532,9 @@
       document.getElementById('sidebar').classList.toggle('active')
     }
 
-    function generateSidebar() {
-      const content = document.getElementById('sidebarContent')
-      content.innerHTML = `
-        <a href="#" class="sidebar-item active" onclick="switchPage('dashboardAccueil'); toggleSidebar();">🏠 Accueil</a>
-        <a href="#" class="sidebar-item" onclick="switchPage('dashboardPronostics'); toggleSidebar();">📊 Pronostics</a>
-        <a href="#" class="sidebar-item" onclick="switchPage('dashboardResultats'); toggleSidebar();">🏆 Résultats</a>
-      `
-    }
-
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'setupPhotoFile') {
-        const file = e.target.files[0]
-        if (file) {
-          uploadedPhotoFile = file
-          const reader = new FileReader()
-          reader.onload = (event) => {
-            const preview = document.getElementById('setupPhotoPreview')
-            preview.src = event.target.result
-            preview.style.display = 'block'
-          }
-          reader.readAsDataURL(file)
-        }
-      }
-      if (e.target.id === 'publicPhotoFile') {
-        const file = e.target.files[0]
-        if (file) {
-          uploadedPhotoPublic = file
-          selectedAvatar = null
-          const preview = document.getElementById('publicPhotoPreview')
-          const reader = new FileReader()
-          reader.onload = (event) => {
-            preview.src = event.target.result
-            preview.style.display = 'block'
-          }
-          reader.readAsDataURL(file)
-          document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
-        }
-      }
+    window.addEventListener('load', () => {
+      app.init()
     })
-
-    async function loadPublicSalon(slug) {
-      const { data: salon, error } = await client
-        .from('salons')
-        .select('*, couples(*)')
-        .eq('slug', slug)
-        .single()
-
-      if (error || !salon) {
-        showPage('loginPage')
-        return
-      }
-
-      currentSalon = salon
-      currentCouple = salon.couples
-      generatePublicPage()
-      showPage('salonPublicPage')
-      generateAvatarOptions()
-      generatePublicForm()
-      loadPublicPronostics()
-    }
-
-    async function loadUserSalon() {
-      const { data: couple } = await client
-        .from('couples')
-        .select('*, salons(*)')
-        .eq('user_id', currentUser.id)
-        .single()
-
-      if (!couple || !couple.salons || couple.salons.length === 0) {
-        showPage('setupPage')
-      } else {
-        currentCouple = couple
-        currentSalon = couple.salons[0]
-        generateDashboard()
-        generateSidebar()
-        showPage('dashboardAccueil')
-        loadDashboardPronostics()
-      }
-    }
-
-    function toggleSignup() {
-      document.getElementById('loginPage').classList.toggle('active')
-      document.getElementById('signupPage').classList.toggle('active')
-    }
-
-    async function handleSignup() {
-      const email = document.getElementById('signupEmail').value
-      const password = document.getElementById('signupPassword').value
-      const confirm = document.getElementById('signupPasswordConfirm').value
-
-      if (password !== confirm) {
-        showMessage('signupMessage', 'Les mots de passe ne correspondent pas', 'error')
-        return
-      }
-
-      const { error } = await client.auth.signUp({ email, password })
-      if (error) {
-        showMessage('signupMessage', '❌ ' + error.message, 'error')
-      } else {
-        showMessage('signupMessage', '✅ Compte créé ! Veuillez vous connecter.', 'success')
-        setTimeout(() => toggleSignup(), 1500)
-      }
-    }
-
-    async function handleLogin() {
-      const email = document.getElementById('loginEmail').value
-      const password = document.getElementById('loginPassword').value
-
-      const { data, error } = await client.auth.signInWithPassword({ email, password })
-      if (error) {
-        showMessage('loginMessage', '❌ Email ou mot de passe incorrect', 'error')
-      } else {
-        currentUser = data.user
-        await loadUserSalon()
-      }
-    }
-
-    async function handleLogout() {
-      await client.auth.signOut()
-      currentUser = null
-      currentCouple = null
-      currentSalon = null
-      isAdminVerified = false
-      showPage('loginPage')
-    }
-
-    async function createSalon() {
-      const prenom_papa = document.getElementById('setupPapaPm').value
-      const prenom_maman = document.getElementById('setupMamanPm').value
-      const description = document.getElementById('setupDescription').value
-      const date_terme = document.getElementById('setupDateTerme').value
-      const nb_enfants = parseInt(document.getElementById('setupNbEnfants').value)
-
-      const items = []
-      if (document.getElementById('item-sexe').checked) items.push('sexe')
-      if (document.getElementById('item-prenom').checked) items.push('prenom')
-      if (document.getElementById('item-date').checked) items.push('date')
-      if (document.getElementById('item-heure').checked) items.push('heure')
-      if (document.getElementById('item-taille').checked) items.push('taille')
-      if (document.getElementById('item-poids').checked) items.push('poids')
-      if (document.getElementById('item-cheveux').checked) items.push('cheveux')
-      if (document.getElementById('item-yeux').checked) items.push('yeux')
-      if (document.getElementById('item-ressemblance').checked) items.push('ressemblance')
-
-      let photoUrl = null
-      if (uploadedPhotoFile) {
-        const fileName = Date.now() + '_' + uploadedPhotoFile.name
-        const { data, error: uploadError } = await client.storage
-          .from('couple-photos')
-          .upload(fileName, uploadedPhotoFile)
-
-        if (uploadError) {
-          showMessage('setupMessage', '❌ Erreur upload: ' + uploadError.message, 'error')
-          return
-        }
-
-        photoUrl = client.storage.from('couple-photos').getPublicUrl(fileName).data.publicUrl
-      }
-
-      const { data: couple, error: coupleError } = await client
-        .from('couples')
-        .insert([{
-          user_id: currentUser.id,
-          prenom_papa,
-          prenom_maman,
-          description,
-          date_terme,
-          nb_enfants_actuels: nb_enfants,
-          items_selectionnes: items,
-          photo_url: photoUrl
-        }])
-        .select()
-        .single()
-
-      if (coupleError) {
-        showMessage('setupMessage', '❌ Erreur: ' + coupleError.message, 'error')
-        return
-      }
-
-      const slug = prenom_papa.toLowerCase() + '-' + prenom_maman.toLowerCase() + '-' + Date.now()
-      const { data: salon, error: salonError } = await client
-        .from('salons')
-        .insert([{ couple_id: couple.id, slug }])
-        .select()
-        .single()
-
-      if (salonError) {
-        showMessage('setupMessage', '❌ Erreur: ' + salonError.message, 'error')
-        return
-      }
-
-      currentCouple = couple
-      currentSalon = salon
-      generateDashboard()
-      generateSidebar()
-      showPage('dashboardAccueil')
-    }
-
-    function generateDashboard() {
-      document.getElementById('dashboardTitle').textContent = currentCouple.prenom_papa + ' & ' + currentCouple.prenom_maman
-      document.getElementById('dashboardEmail').textContent = currentUser.email
-      document.getElementById('dashboardDate').textContent = 'Terme : ' + currentCouple.date_terme
-
-      if (currentCouple.photo_url) {
-        document.getElementById('dashboardPhoto').src = currentCouple.photo_url
-      } else {
-        document.getElementById('dashboardPhoto').src = getAvatarUrl('leaf', currentCouple.prenom_papa)
-      }
-
-      const salonUrl = window.location.origin + window.location.pathname + '?salon=' + currentSalon.slug
-      document.getElementById('salonLink').textContent = salonUrl
-      generateIntroText()
-    }
-
-    function generatePublicPage() {
-      document.getElementById('publicTitle').textContent = currentCouple.prenom_papa + ' & ' + currentCouple.prenom_maman
-      document.getElementById('publicSubtitle').textContent = 'Terme : ' + currentCouple.date_terme
-
-      if (currentCouple.photo_url) {
-        document.getElementById('publicPhoto').src = currentCouple.photo_url
-      } else {
-        document.getElementById('publicPhoto').src = getAvatarUrl('leaf', currentCouple.prenom_papa)
-      }
-
-      generateIntroText()
-    }
-
-    function generateIntroText() {
-      const intro = `Bienvenue dans le salon de pronostics de ${currentCouple.prenom_papa} et ${currentCouple.prenom_maman}! Nous attendons avec impatience l'arrivée de notre petit bout. Partagez vos prédictions et découvrez qui sera le plus proche de la réalité. ${currentCouple.description || 'À bientôt!'}`
-      document.getElementById('introPreview').textContent = intro
-      if (document.getElementById('publicIntro')) {
-        document.getElementById('publicIntro').textContent = intro
-      }
-    }
-
-    function generateAvatarOptions() {
-      const container = document.getElementById('avatarOptions')
-      if (!container) return
-      container.innerHTML = ''
-      AVATAR_STYLES.forEach(avatar => {
-        const div = document.createElement('div')
-        div.className = 'avatar-option'
-        div.onclick = () => selectAvatar(avatar.style, div)
-        div.innerHTML = `
-          <img src="${getAvatarUrl(avatar.style, 'test')}" class="avatar-preview">
-          <div class="avatar-name">${avatar.name}</div>
-        `
-        container.appendChild(div)
-      })
-    }
-
-    function selectAvatar(style, element) {
-      uploadedPhotoPublic = null
-      selectedAvatar = style
-      document.getElementById('publicPhotoPreview').style.display = 'none'
-      document.getElementById('publicPhotoFile').value = ''
-      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'))
-      element.classList.add('selected')
-    }
-
-    function generatePublicForm() {
-      const formDiv = document.getElementById('publicFormItems')
-      formDiv.innerHTML = ''
-      const items = currentCouple.items_selectionnes || []
-
-      if (items.includes('sexe')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>👶 Sexe du bébé</label>
-            <select id="form-sexe">
-              <option value="">Choisir</option>
-              <option value="Garçon">Garçon</option>
-              <option value="Fille">Fille</option>
-            </select>
-          </div>
-        `
-      }
-      if (items.includes('prenom')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>📝 Prénom du bébé</label>
-            <input type="text" id="form-prenom" placeholder="Emma">
-          </div>
-        `
-      }
-      if (items.includes('date')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>📅 Date de naissance</label>
-            <input type="date" id="form-date">
-          </div>
-        `
-      }
-      if (items.includes('heure')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>🕐 Heure de naissance</label>
-            <input type="time" id="form-heure">
-          </div>
-        `
-      }
-      if (items.includes('taille')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>📏 Taille (cm)</label>
-            <input type="number" id="form-taille" placeholder="51">
-          </div>
-        `
-      }
-      if (items.includes('poids')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>⚖️ Poids (grammes)</label>
-            <input type="number" id="form-poids" placeholder="3400">
-          </div>
-        `
-      }
-      if (items.includes('cheveux')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>💁 Couleur de cheveux</label>
-            <select id="form-cheveux">
-              <option value="">Choisir</option>
-              <option value="Brun">Brun</option>
-              <option value="Blond">Blond</option>
-              <option value="Roux">Roux</option>
-              <option value="Chauve">Chauve</option>
-            </select>
-          </div>
-        `
-      }
-      if (items.includes('yeux')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>👁️ Couleur des yeux</label>
-            <select id="form-yeux">
-              <option value="">Choisir</option>
-              <option value="Bleu">Bleu</option>
-              <option value="Marron">Marron</option>
-              <option value="Vert">Vert</option>
-              <option value="Noisette">Noisette</option>
-            </select>
-          </div>
-        `
-      }
-      if (items.includes('ressemblance')) {
-        formDiv.innerHTML += `
-          <div class="form-group">
-            <label>👨👩 Ressemblance</label>
-            <select id="form-ressemblance">
-              <option value="">Choisir</option>
-              <option value="Papa">Papa</option>
-              <option value="Maman">Maman</option>
-              <option value="Neutre">Moitié-moitié</option>
-            </select>
-          </div>
-        `
-      }
-    }
-
-    function showPronosticsForm() {
-      document.getElementById('pronosticsFormSection').style.display = 'block'
-    }
-
-    async function submitPublicPronostic() {
-      const nom = document.getElementById('publicNomPrenom').value
-      if (!nom) {
-        showMessage('publicMessage', '❌ Entrez votre nom', 'error')
-        return
-      }
-
-      let photoUrl = null
-      if (uploadedPhotoPublic) {
-        const fileName = Date.now() + '_' + uploadedPhotoPublic.name
-        const { data, error: uploadError } = await client.storage
-          .from('participant-photos')
-          .upload(fileName, uploadedPhotoPublic)
-
-        if (!uploadError) {
-          photoUrl = client.storage.from('participant-photos').getPublicUrl(fileName).data.publicUrl
-        }
-      } else if (selectedAvatar) {
-        photoUrl = getAvatarUrl(selectedAvatar, nom)
-      }
-
-      const data = {
-        salon_id: currentSalon.id,
-        prenom_participant: nom,
-        photo_url: photoUrl,
-        sexe_bebe: document.getElementById('form-sexe')?.value || null,
-        prenom_bebe: document.getElementById('form-prenom')?.value || null,
-        date_naissance: document.getElementById('form-date')?.value || null,
-        heure_naissance: document.getElementById('form-heure')?.value || null,
-        taille_cm: document.getElementById('form-taille')?.value ? parseInt(document.getElementById('form-taille').value) : null,
-        poids_grammes: document.getElementById('form-poids')?.value ? parseInt(document.getElementById('form-poids').value) : null,
-        couleur_cheveux: document.getElementById('form-cheveux')?.value || null,
-        couleur_yeux: document.getElementById('form-yeux')?.value || null,
-        ressemblance: document.getElementById('form-ressemblance')?.value || null
-      }
-
-      const { error } = await client.from('pronostics').insert([data])
-      if (error) {
-        showMessage('publicMessage', '❌ ' + error.message, 'error')
-      } else {
-        showMessage('publicMessage', '🎉 Pronostic enregistré!', 'success')
-        document.getElementById('publicNomPrenom').value = ''
-        document.getElementById('pronosticsFormSection').style.display = 'none'
-        loadPublicPronostics()
-      }
-    }
-
-    async function loadPublicPronostics() {
-      const { data } = await client
-        .from('pronostics')
-        .select('*')
-        .eq('salon_id', currentSalon.id)
-        .order('created_at', { ascending: false })
-
-      const tbody = document.getElementById('publicPronosticsBody')
-      tbody.innerHTML = ''
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
-        return
-      }
-
-      data.forEach(row => {
-        const card = document.createElement('div')
-        card.className = 'pronostic-card'
-        card.innerHTML = `
-          <img src="${row.photo_url || getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
-          <div class="pronostic-content">
-            <div class="pronostic-name">${row.prenom_participant}</div>
-          </div>
-        `
-        tbody.appendChild(card)
-      })
-    }
-
-    async function loadDashboardPronostics() {
-      const { data } = await client
-        .from('pronostics')
-        .select('*')
-        .eq('salon_id', currentSalon.id)
-        .order('created_at', { ascending: false })
-
-      allPronostics = data || []
-      displayDashboardPronostics()
-    }
-
-    function displayDashboardPronostics() {
-      const container = document.getElementById('dashboardPronosticsContent')
-      container.innerHTML = ''
-
-      if (!allPronostics || allPronostics.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #999;">Aucun pronostic pour l\'instant</p>'
-        return
-      }
-
-      allPronostics.forEach(row => {
-        const card = document.createElement('div')
-        card.className = 'pronostic-card'
-        card.innerHTML = `
-          <img src="${row.photo_url || getAvatarUrl('leaf', row.prenom_participant)}" class="pronostic-avatar">
-          <div class="pronostic-content">
-            <div class="pronostic-name">${row.prenom_participant}</div>
-          </div>
-          <div class="pronostic-actions">
-            <button class="delete-btn-small" onclick="deletePronostic('${row.id}')">🗑️ Supprimer</button>
-          </div>
-        `
-        container.appendChild(card)
-      })
-    }
-
-    async function deletePronostic(id) {
-      if (!confirm('Supprimer ce pronostic ?')) return
-
-      const { error } = await client.from('pronostics').delete().eq('id', id)
-      if (error) {
-        alert('Erreur: ' + error.message)
-      } else {
-        allPronostics = allPronostics.filter(p => p.id !== id)
-        displayDashboardPronostics()
-      }
-    }
-
-    function verifyAdminCode() {
-      const code = document.getElementById('adminCodeInput').value
-      if (code === ADMIN_CODE) {
-        isAdminVerified = true
-        document.getElementById('adminContent').style.display = 'block'
-        document.getElementById('adminCodeInput').disabled = true
-      } else {
-        alert('❌ Code incorrect')
-      }
-    }
-
-    async function calculerPoints() {
-      if (!isAdminVerified) {
-        showMessage('adminMessage', '❌ Vérifiez d\'abord le code', 'error')
-        return
-      }
-
-      const sexe = document.getElementById('adminSexe').value
-      const prenom = document.getElementById('adminPrenom').value.toLowerCase()
-      const date = document.getElementById('adminDate').value
-      const heure = document.getElementById('adminHeure').value
-      const taille = parseInt(document.getElementById('adminTaille').value)
-      const poids = parseInt(document.getElementById('adminPoids').value)
-      const cheveux = document.getElementById('adminCheveux').value
-      const yeux = document.getElementById('adminYeux').value
-
-      if (!sexe || !prenom || !date || !heure || !taille || !poids || !cheveux || !yeux) {
-        showMessage('adminMessage', '❌ Remplissez tous les champs', 'error')
-        return
-      }
-
-      const { data: pronostics } = await client
-        .from('pronostics')
-        .select('*')
-        .eq('salon_id', currentSalon.id)
-
-      const dateReal = new Date(date)
-      const heureRealHours = parseInt(heure.split(':')[0])
-
-      const scores = pronostics.map(p => {
-        let points = 0
-        let details = []
-
-        if (p.sexe_bebe === sexe) {
-          points += 6
-          details.push('Sexe')
-        }
-
-        if (p.prenom_bebe && p.prenom_bebe.toLowerCase() === prenom) {
-          points += 10
-          details.push('Prénom')
-        }
-
-        const dateProno = new Date(p.date_naissance)
-        const jours = Math.abs(Math.floor((dateReal - dateProno) / (1000 * 60 * 60 * 24)))
-        const datePoints = Math.max(0, 10 - jours)
-        points += datePoints
-        if (datePoints === 10) details.push('Date')
-        else if (datePoints > 0) details.push(`Date-${jours}j`)
-
-        const heurePronoHours = parseInt(p.heure_naissance.split(':')[0])
-        const ecartHeures = Math.abs(heurePronoHours - heureRealHours)
-        const heurePoints = Math.max(0, 6 - ecartHeures)
-        points += heurePoints
-        if (heurePoints === 6) details.push('Heure')
-        else if (heurePoints > 0) details.push(`Heure-${ecartHeures}h`)
-
-        const ecartTaille = Math.abs(p.taille_cm - taille)
-        const taillePoints = Math.max(0, 10 - ecartTaille)
-        points += taillePoints
-        if (taillePoints === 10) details.push('Taille')
-
-        const ecartPoids = Math.abs(p.poids_grammes - poids)
-        const poidsPoints = Math.max(0, 10 - Math.floor(ecartPoids / 20))
-        points += poidsPoints
-        if (poidsPoints === 10) details.push('Poids')
-
-        if (p.couleur_cheveux === cheveux) {
-          points += 4
-          details.push('Cheveux')
-        }
-
-        if (p.couleur_yeux === yeux) {
-          points += 6
-          details.push('Yeux')
-        }
-
-        return {
-          id: p.id,
-          nom: p.prenom_participant,
-          email: p.email,
-          points: Math.round(points),
-          details: details.join(' • ')
-        }
-      })
-
-      scores.sort((a, b) => b.points - a.points)
-
-      const tbody = document.getElementById('classementBody')
-      tbody.innerHTML = ''
-      scores.forEach((score, index) => {
-        const rang = index + 1
-        const emojis = ['🥇', '🥈', '🥉']
-        const emoji = emojis[index] || (rang + '.')
-        const tr = document.createElement('tr')
-        tr.innerHTML = `
-          <td class="rank">${emoji}</td>
-          <td>${score.nom}</td>
-          <td><span class="points-badge">${score.points} pts</span></td>
-          <td><button class="delete-btn-small" onclick="deletePronosticById('${score.id}')">🗑️</button></td>
-        `
-        tbody.appendChild(tr)
-      })
-
-      showMessage('adminMessage', '✅ Points calculés !', 'success')
-    }
-
-    async function deletePronosticById(id) {
-      if (!confirm('Supprimer ce pronostic ?')) return
-      const { error } = await client.from('pronostics').delete().eq('id', id)
-      if (error) {
-        alert('Erreur: ' + error.message)
-      } else {
-        calculerPoints()
-      }
-    }
-
-    async function sendResults() {
-      const winnerEmail = document.getElementById('winnerEmail').value
-      const lotMessage = document.getElementById('lotMessage').value
-
-      if (!winnerEmail) {
-        alert('❌ Entrez l\'email du gagnant')
-        return
-      }
-
-      const sexe = document.getElementById('adminSexe').value
-      const prenom = document.getElementById('adminPrenom').value
-      const date = document.getElementById('adminDate').value
-      const heure = document.getElementById('adminHeure').value
-      const taille = document.getElementById('adminTaille').value
-      const poids = document.getElementById('adminPoids').value
-
-      const classement = document.getElementById('classementBody').innerText
-
-      const templateParams = {
-        to_email: winnerEmail,
-        couple_papa: currentCouple.prenom_papa,
-        couple_maman: currentCouple.prenom_maman,
-        bebe_sexe: sexe,
-        bebe_prenom: prenom,
-        bebe_date: date,
-        bebe_heure: heure,
-        bebe_taille: taille,
-        bebe_poids: poids,
-        classement: classement,
-        lot_message: lotMessage || 'Merci d\'avoir joué!'
-      }
-
-      try {
-        await emailjs.send('service_v9hvgav', 'template_baby-results', templateParams)
-        alert('✅ Email envoyé avec succès!')
-      } catch (error) {
-        alert('❌ Erreur: ' + error.message)
-      }
-    }
-
-    function getAvatarUrl(style, seed) {
-      return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`
-    }
-
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
-      document.getElementById(pageId).classList.add('active')
-    }
-
-    function switchPage(pageId) {
-      showPage(pageId)
-      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'))
-      event.target.classList.add('active')
-    }
-
-    function copySalonLink() {
-      const link = document.getElementById('salonLink').textContent
-      navigator.clipboard.writeText(link).then(() => {
-        alert('✅ Lien copié!')
-      })
-    }
-
-    function showMessage(elementId, text, type) {
-      const el = document.getElementById(elementId)
-      if (!el) return
-      el.textContent = text
-      el.className = `message ${type}`
-      el.style.display = 'block'
-    }
   </script>
 
 </body>
